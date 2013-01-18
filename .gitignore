@@ -14,7 +14,7 @@
 
 *.exe
 
-./transAss1/Debug/*
-Debug/*
+transAss1/Debug/
+Debug/
 
-transAss1/
+*.suo
