@@ -20,3 +20,5 @@ Debug/
 *.suo
 
 *.opensdf
+*.user
+*.v11.suo

@@ -4,6 +4,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <stack>
+#include <vector>
 
 using namespace std;
 
@@ -11,6 +12,7 @@ using namespace std;
 /*** Enums and Print Functions for Terminals and Non-Terminals  **********************/
 
 #define MAX_SYMBOL_NAME_SIZE 25
+#define MAX_NUMBER 2147483648
 
 //all of the terminals in the language
 typedef enum {
@@ -103,7 +105,9 @@ class scanner_t {
 	// constructor - inits g_next_token
 	scanner_t();
 
+
   private:
+
 
 	// WRITEME: Figure out what you will need to write the scanner
 	// and to implement the above interface. It does not have to
@@ -113,8 +117,11 @@ class scanner_t {
 	// this calculator are trivial except for the numbers,
 	// so it should not be that bad
 
+	  vector<token_type> tokens;
+	  vector<int> numbers;
 	// This is a bogus member for implementing a useful stub, it should
 	// be cut out once you get the scanner up and going.
+
 	token_type bogo_token;
 	void scan_error(char x);
 	// error message and exit for mismatch
@@ -128,8 +135,10 @@ token_type scanner_t::next_token()
 	// at the next token and return it to the parser.  It should _not_
 	// actually consume a token - you should be able to call next_token()
 	// multiple times without actually reading any more tokens in
-	if ( bogo_token!=T_plus && bogo_token!=T_eof ) return T_plus;
-	else return bogo_token;
+	//char test = getchar();
+	//if ( bogo_token!=T_plus && bogo_token!=T_eof ) return T_plus;
+	//else return bogo_token;
+	return tokens.front();
 }
 
 void scanner_t::eat_token(token_type c)
@@ -141,11 +150,76 @@ void scanner_t::eat_token(token_type c)
 	// WRITEME: cut this bogus stuff out and implement eat_token
 	if ( rand()%10 < 8 ) bogo_token = T_plus;
 	else bogo_token = T_eof;
-
 }
 
 scanner_t::scanner_t()
 {
+
+	char c = getchar();
+
+	while (c != '\n' || c==EOF) {
+
+		if (isdigit(c))
+		{
+			string num = "";
+			while (isdigit(c))
+			{
+				num += c;
+				// fix number
+				c = getchar();
+			}
+			//int temp = atoi(num.c_str());		// atio forces number under MAX_NUMBER
+			//if(MAX_NUMBER > temp)
+			//{
+				tokens.push_back(T_num);
+				numbers.push_back(atoi(num.c_str()));
+			//}
+
+		}
+
+		switch (c)
+		{
+			case '+':
+				tokens.push_back(T_plus);
+				break;
+			case '-':
+				tokens.push_back(T_minus);
+				break;
+			case '*':
+				tokens.push_back(T_times);
+				break;
+			case '/':
+				tokens.push_back(T_div);
+				break;
+			case '<':
+				tokens.push_back(T_lt);
+				break;
+			case '>':
+				tokens.push_back(T_gt);
+				break;
+			case '=':
+				tokens.push_back(T_eq);
+				break;
+			case ';':
+				tokens.push_back(T_semicolon);
+				break;
+			case '(':
+				tokens.push_back(T_openparen);
+				break;
+			case ')':
+				tokens.push_back(T_closeparen);
+				break;
+			case EOF:
+				break;
+			default:
+				break;
+		}
+
+		c = getchar();
+	}
+
+	printf("test");
+
 	// WRITEME
 }
 
@@ -425,6 +499,9 @@ void parser_t::List()
 //2 + 2 = 4;
 
 
+//5 - (4 - 6);
+//(5 - (4 - 2)((6))));
+
 // WRITEME: you will need to put the rest of the procedures here
 
 
@@ -432,9 +509,8 @@ void parser_t::List()
 
 int main(int argc, char* argv[])
 {
-
+	//argv[0] = 'a';
 	// just scanner
-	argc = 2;
 	if (argc > 1) {
 		if (true || strcmp(argv[1], "-s") == 0) {
 			scanner_t scanner;
