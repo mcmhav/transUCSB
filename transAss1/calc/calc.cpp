@@ -5,6 +5,9 @@
 #include <ctype.h>
 #include <stack>
 #include <vector>
+#include <iostream>
+#include <fstream>
+#include <string>
 
 using namespace std;
 
@@ -12,7 +15,7 @@ using namespace std;
 /*** Enums and Print Functions for Terminals and Non-Terminals  **********************/
 
 #define MAX_SYMBOL_NAME_SIZE 25
-#define MAX_NUMBER 2147483648
+#define MAX_NUMBER 2147483647
 
 //all of the terminals in the language
 typedef enum {
@@ -82,6 +85,7 @@ char* nonterm_to_string(nonterm_type nt)
 	switch( nt ) {
 		  case epsilon: strncpy(buffer,"e",MAX_SYMBOL_NAME_SIZE); break;
 		  case NT_List: strncpy(buffer,"List",MAX_SYMBOL_NAME_SIZE); break;
+		  case NT_Expr: strncpy(buffer,"Expression",MAX_SYMBOL_NAME_SIZE); break;
 		  // WRITEME: add the other nonterminals you need here
 		  default: strncpy(buffer,"unknown_nonterm",MAX_SYMBOL_NAME_SIZE); break;
 		}
@@ -117,8 +121,9 @@ class scanner_t {
 	// this calculator are trivial except for the numbers,
 	// so it should not be that bad
 
-	  vector<token_type> tokens;
-	  vector<int> numbers;
+	vector<token_type> tokens;
+	vector<int> numbers;
+	int line;
 	// This is a bogus member for implementing a useful stub, it should
 	// be cut out once you get the scanner up and going.
 
@@ -148,92 +153,115 @@ void scanner_t::eat_token(token_type c)
 	// mismatch error ( call - mismatch_error(c) )
 
 	// WRITEME: cut this bogus stuff out and implement eat_token
-	if ( rand()%10 < 8 ) bogo_token = T_plus;
-	else bogo_token = T_eof;
+	if (c != next_token()) mismatch_error(c);
+	else 
+	{
+		if (c == T_num)
+		{
+			tokens.pop_back();
+			numbers.pop_back();
+		}
+		else
+		{
+			tokens.pop_back();
+		}
+	}
 }
 
 scanner_t::scanner_t()
 {
+	char ca, str[256];
+	ifstream is;
+	line = 1;
 
-	char c = getchar();
+	is.open ("test.txt");        // open file
 
-	while (c != '\n' || c==EOF) {
-
-		if (isdigit(c))
+	while (is.good())     // loop while extraction from file is possible
+	{
+		ca = is.get();       // get character from file
+		if (is.good())
 		{
-			string num = "";
-			while (isdigit(c))
+			if (isdigit(ca))
 			{
-				num += c;
-				// fix number
-				c = getchar();
+				string num = "";
+				while (isdigit(ca))
+				{
+					num += ca;
+					cout << ca;
+					ca = is.get();
+				}
+				int temp = atoi(num.c_str());		// atio forces number under MAX_NUMBER
+				if(MAX_NUMBER > temp || num[9] - 48 <= 7)
+				{
+					tokens.push_back(T_num);
+					numbers.push_back(atoi(num.c_str()));
+				}
+				else
+				{
+					scan_error(get_line());
+				}
+
 			}
-			//int temp = atoi(num.c_str());		// atio forces number under MAX_NUMBER
-			//if(MAX_NUMBER > temp)
-			//{
-				tokens.push_back(T_num);
-				numbers.push_back(atoi(num.c_str()));
-			//}
 
+			switch (ca)
+			{
+				case '+':
+					tokens.push_back(T_plus);
+					break;
+				case '-':
+					tokens.push_back(T_minus);
+					break;
+				case '*':
+					tokens.push_back(T_times);
+					break;
+				case '/':
+					tokens.push_back(T_div);
+					break;
+				case '<':
+					tokens.push_back(T_lt);
+					break;
+				case '>':
+					tokens.push_back(T_gt);
+					break;
+				case '=':
+					tokens.push_back(T_eq);
+					break;
+				case ';':
+					tokens.push_back(T_semicolon);
+					break;
+				case '(':
+					tokens.push_back(T_openparen);
+					break;
+				case ')':
+					tokens.push_back(T_closeparen);
+					break;
+				case EOF:
+					tokens.push_back(T_eof);
+					break;
+				case '\n':
+					line++;
+					break;
+				default:
+					break;
+			}
 		}
-
-		switch (c)
-		{
-			case '+':
-				tokens.push_back(T_plus);
-				break;
-			case '-':
-				tokens.push_back(T_minus);
-				break;
-			case '*':
-				tokens.push_back(T_times);
-				break;
-			case '/':
-				tokens.push_back(T_div);
-				break;
-			case '<':
-				tokens.push_back(T_lt);
-				break;
-			case '>':
-				tokens.push_back(T_gt);
-				break;
-			case '=':
-				tokens.push_back(T_eq);
-				break;
-			case ';':
-				tokens.push_back(T_semicolon);
-				break;
-			case '(':
-				tokens.push_back(T_openparen);
-				break;
-			case ')':
-				tokens.push_back(T_closeparen);
-				break;
-			case EOF:
-				break;
-			default:
-				break;
-		}
-
-		c = getchar();
+		cout << ca;
 	}
 
-	printf("test");
-
+	is.close();     
 	// WRITEME
 }
 
 int scanner_t::get_line()
 {
 	// WRITEME
-	return 0;
+	return line;
 }
 
 void scanner_t::scan_error (char x)
 {
 	printf("scan error: unrecognized character '%c' -line %d\n",x, get_line());
 	exit(1);
-
 }
 
 void scanner_t::mismatch_error (token_type x)
@@ -369,9 +397,9 @@ char* parsetree_t::stuple_to_string(const stuple& s)
 {
 	static char buffer[MAX_SYMBOL_NAME_SIZE];
 	if ( s.stype == TERMINAL ) {
-		_snprintf( buffer, MAX_SYMBOL_NAME_SIZE, "%s", token_to_string(s.t) );
+		snprintf( buffer, MAX_SYMBOL_NAME_SIZE, "%s", token_to_string(s.t) );
 	} else if ( s.stype == NONTERMINAL ) {
-		_snprintf( buffer, MAX_SYMBOL_NAME_SIZE, "%s", nonterm_to_string(s.nt) );
+		snprintf( buffer, MAX_SYMBOL_NAME_SIZE, "%s", nonterm_to_string(s.nt) );
 	} else {
 		assert(0);
 	}
@@ -399,6 +427,9 @@ class parser_t {
 	void div_by_zero_error();
 
 	void List();
+	void test();
+	void Expr();
+	void Term();
 	// WRITEME: fill this out with the rest of the
 	// recursive decent stuff (more methods)
 
@@ -464,11 +495,45 @@ void parser_t::List()
 	//parsing of the data
 	parsetree.push(NT_List);
 
+	Expr();
+
+	//switch( scanner.next_token() )
+	//{
+	//	case T_num:
+	//		eat_token(T_num);
+	//		test();
+	//		break;
+	//	case T_closeparen:
+	//		eat_token(T_closeparen);
+	//		test();
+	//		break;
+	//	case T_eof:
+	//		parsetree.drawepsilon();
+	//		break;
+	//	default:
+	//		syntax_error(NT_List);
+	//		break;
+	//}
+
+	//now that we are done with List, we can pop it from the data
+	//stucture that is tracking it for drawing the parse tree
+	parsetree.pop();
+}
+
+void parser_t::Expr()
+{
+	parsetree.push(NT_Expr);
+
 	switch( scanner.next_token() )
 	{
-		case T_plus:
-			eat_token(T_plus);
-			List();
+		case T_num:
+			eat_token(T_num);
+			test();
+			break;
+		case T_openparen:
+			eat_token(T_openparen);
+			Expr();
+			eat_token(T_closeparen);
 			break;
 		case T_eof:
 			parsetree.drawepsilon();
@@ -478,8 +543,46 @@ void parser_t::List()
 			break;
 	}
 
-	//now that we are done with List, we can pop it from the data
-	//stucture that is tracking it for drawing the parse tree
+	parsetree.pop();
+}
+
+void parser_t::Term()
+{
+	
+}
+
+void parser_t::test()
+{
+	parsetree.push(T_num);
+
+	switch (scanner.next_token())
+	{
+		case T_plus:
+			eat_token(T_plus);
+			//parsetree.push(T_plus);
+			Expr();
+			break;
+		case T_minus:
+			eat_token(T_minus);
+			//parsetree.push(T_minus);
+			//parsetree.pop();
+			Expr();
+			break;
+		case T_semicolon:
+			eat_token(T_semicolon);
+			//parsetree.push(T_semicolon);
+			break;
+		//case T_times:
+		//	eat_token(T_times);
+		//	break;
+		//case T_div:
+		//	eat_token(T_div);
+		//	break;
+		default:
+			break;
+	}
+
+
 	parsetree.pop();
 }
 
@@ -509,7 +612,6 @@ void parser_t::List()
 
 int main(int argc, char* argv[])
 {
-	//argv[0] = 'a';
 	// just scanner
 	if (argc > 1) {
 		if (true || strcmp(argv[1], "-s") == 0) {
