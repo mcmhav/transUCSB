@@ -563,6 +563,7 @@ void parser_t::ExprP()
 		case T_eof:
 			return;
 		case T_semicolon:
+			eat_token(T_semicolon);
 			return;
 		default:
 			syntax_error(NT_List);
@@ -670,7 +671,7 @@ void parser_t::RelP()
 
 void parser_t::Fact()
 {
-	parsetree.push(NT_Term);
+	parsetree.push(NT_Fact);
 	switch (scanner.next_token())
 	{
 		case T_num:
