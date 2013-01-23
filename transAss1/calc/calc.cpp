@@ -609,7 +609,8 @@ void parser_t::List()
 			List();
 			break;
 		case T_openparen:
-			Expr();
+			Rel();
+			List();
 			break;
 		case T_eof:
 			parsetree.drawepsilon();
@@ -660,6 +661,9 @@ void parser_t::Rel()
 			eat_token(T_eq);
 			Expr();
 			Rel();
+		case T_openparen:
+			Expr();
+			break;
 		default:
 			syntax_error(NT_Rel);
 			break;
