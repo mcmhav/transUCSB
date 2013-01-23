@@ -67,7 +67,13 @@ char* token_to_string(token_type c) {
 typedef enum {
 	epsilon = 100,
 	NT_List,
-	NT_Expr
+	NT_Expr,
+	NT_ExprP,
+	NT_Term,
+	NT_TermP,
+	NT_Rel,
+	NT_RelP,
+	NT_Fact
 	// WRITEME: add symbolic names for your non-terminals here
 } nonterm_type;
 
@@ -86,6 +92,12 @@ char* nonterm_to_string(nonterm_type nt)
 		  case epsilon: strncpy(buffer,"e",MAX_SYMBOL_NAME_SIZE); break;
 		  case NT_List: strncpy(buffer,"List",MAX_SYMBOL_NAME_SIZE); break;
 		  case NT_Expr: strncpy(buffer,"Expression",MAX_SYMBOL_NAME_SIZE); break;
+		  case NT_ExprP: strncpy(buffer,"ExpressionPrime",MAX_SYMBOL_NAME_SIZE); break;
+		  case NT_Term: strncpy(buffer,"Term",MAX_SYMBOL_NAME_SIZE); break;
+		  case NT_TermP: strncpy(buffer,"TermPrime",MAX_SYMBOL_NAME_SIZE); break;
+		  case NT_Rel: strncpy(buffer,"Relation",MAX_SYMBOL_NAME_SIZE); break;
+		  case NT_RelP: strncpy(buffer,"RelationPrime",MAX_SYMBOL_NAME_SIZE); break;
+		  case NT_Fact: strncpy(buffer,"Factor",MAX_SYMBOL_NAME_SIZE); break;
 		  // WRITEME: add the other nonterminals you need here
 		  default: strncpy(buffer,"unknown_nonterm",MAX_SYMBOL_NAME_SIZE); break;
 		}
@@ -397,9 +409,9 @@ char* parsetree_t::stuple_to_string(const stuple& s)
 {
 	static char buffer[MAX_SYMBOL_NAME_SIZE];
 	if ( s.stype == TERMINAL ) {
-		snprintf( buffer, MAX_SYMBOL_NAME_SIZE, "%s", token_to_string(s.t) );
+		_snprintf( buffer, MAX_SYMBOL_NAME_SIZE, "%s", token_to_string(s.t) );
 	} else if ( s.stype == NONTERMINAL ) {
-		snprintf( buffer, MAX_SYMBOL_NAME_SIZE, "%s", nonterm_to_string(s.nt) );
+		_snprintf( buffer, MAX_SYMBOL_NAME_SIZE, "%s", nonterm_to_string(s.nt) );
 	} else {
 		assert(0);
 	}
@@ -427,9 +439,14 @@ class parser_t {
 	void div_by_zero_error();
 
 	void List();
-	void test();
 	void Expr();
+	void ExprP();
 	void Term();
+	void TermP();
+	void Rel();
+	void RelP();
+	void Fact();
+
 	// WRITEME: fill this out with the rest of the
 	// recursive decent stuff (more methods)
 
@@ -528,7 +545,35 @@ void parser_t::Expr()
 	{
 		case T_num:
 			eat_token(T_num);
-			test();
+			Term();
+			ExprP();
+			break;
+		case T_openparen:
+			eat_token(T_openparen);
+			Expr();
+			eat_token(T_closeparen);
+			break;
+		case T_eof:
+			parsetree.drawepsilon();
+			break;
+		default:
+			syntax_error(NT_List);
+			break;
+	}
+
+	parsetree.pop();
+}
+
+void parser_t::ExprP()
+{
+	parsetree.push(NT_ExprP);
+
+	switch( scanner.next_token() )
+	{
+		case T_num:
+			eat_token(T_num);
+			Term();
+			ExprP();
 			break;
 		case T_openparen:
 			eat_token(T_openparen);
@@ -548,43 +593,37 @@ void parser_t::Expr()
 
 void parser_t::Term()
 {
-	
-}
-
-void parser_t::test()
-{
-	parsetree.push(T_num);
-
+	parsetree.push(NT_Term);
 	switch (scanner.next_token())
 	{
 		case T_plus:
-			eat_token(T_plus);
-			//parsetree.push(T_plus);
-			Expr();
-			break;
-		case T_minus:
-			eat_token(T_minus);
-			//parsetree.push(T_minus);
-			//parsetree.pop();
-			Expr();
-			break;
-		case T_semicolon:
-			eat_token(T_semicolon);
-			//parsetree.push(T_semicolon);
-			break;
-		//case T_times:
-		//	eat_token(T_times);
-		//	break;
-		//case T_div:
-		//	eat_token(T_div);
-		//	break;
+
 		default:
 			break;
 	}
-
-
 	parsetree.pop();
 }
+
+void parser_t::TermP()
+{
+	
+}
+
+void parser_t::Rel()
+{
+
+}
+
+void parser_t::RelP()
+{
+
+}
+
+void parser_t::Fact()
+{
+
+}
+
 
 
 //5;
