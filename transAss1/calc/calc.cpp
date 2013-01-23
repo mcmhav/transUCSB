@@ -117,6 +117,7 @@ class scanner_t {
 
 	// return line number for errors
 	int get_line();
+	int get_sline();
 
 	// constructor - inits g_next_token
 	scanner_t();
@@ -135,6 +136,7 @@ class scanner_t {
 
 	vector<token_type> tokens;
 	vector<int> numbers;
+	vector<int> lines;		// kinda stupid, but works
 	int line;
 	// This is a bogus member for implementing a useful stub, it should
 	// be cut out once you get the scanner up and going.
@@ -172,10 +174,12 @@ void scanner_t::eat_token(token_type c)
 		{
 			tokens.erase(tokens.begin());
 			numbers.erase(numbers.begin());
+			lines.erase(lines.begin());
 		}
 		else
 		{
 			tokens.erase(tokens.begin());
+			lines.erase(lines.begin());
 		}
 	}
 }
@@ -289,16 +293,19 @@ scanner_t::scanner_t()
 			{
 				tokens.push_back(T_num);
 				numbers.push_back(atoi(num.c_str()));
+				lines.push_back(line);
 			}
 			else
 			{
-				scan_error(get_line());
+				scan_error('O');
 			}
 
 		}
 
 		switch (ca)
 		{
+			case ' ':
+				break;
 			case '+':
 				tokens.push_back(T_plus);
 				break;
@@ -336,7 +343,13 @@ scanner_t::scanner_t()
 				line++;
 				break;
 			default:
+				scan_error(ca);
 				break;
+		}
+
+		if(ca != ' ')
+		{
+			lines.push_back(line);
 		}
 	}
 
@@ -346,12 +359,22 @@ scanner_t::scanner_t()
 int scanner_t::get_line()
 {
 	// WRITEME
+	// int temp;
+	// temp = *lines.begin();
+	// lines.erase(lines.begin());
+	return *lines.begin();
+}
+
+int scanner_t::get_sline()
+{
+	// WRITEME
+
 	return line;
 }
 
 void scanner_t::scan_error (char x)
 {
-	printf("scan error: unrecognized character '%c' -line %d\n",x, get_line());
+	printf("scan error: unrecognized character '%c' -line %d\n",x, get_sline());
 	exit(1);
 }
 
@@ -404,7 +427,7 @@ class parsetree_t {
 parsetree_t::parsetree_t()
 {
 	counter = 0;
-	printf("digraph G { page=\"8.5,11\"; size=\"7.5, 10\"\n");
+	printf("digraph G { page=\"30,11\"; size=\"30, 11\"\n");
 }
 
 // This push function taken a non terminal and keeps it on the parsetree
@@ -464,12 +487,12 @@ void parsetree_t::drawepsilon()
 void parsetree_t::printedge(stuple temp)
 {
 	if ( temp.stype == TERMINAL ) {
-		printf("\t\"%s%d\" [label=\"%s\",style=filled,fillcolor=powderblue]\n",
+		printf("\t\"%s_%d\" [label=\"%s\",style=filled,fillcolor=powderblue]\n",
 		  stuple_to_string(temp),
 		  temp.uniq,
 		  stuple_to_string(temp));
 	} else {
-		printf("\t\"%s%d\" [label=\"%s\"]\n",
+		printf("\t\"%s_%d\" [label=\"%s\"]\n",
 		  stuple_to_string(temp),
 		  temp.uniq,
 		  stuple_to_string(temp));
@@ -478,8 +501,8 @@ void parsetree_t::printedge(stuple temp)
 	//no edge to print if this is the first node
 	if ( !stuple_stack.empty() ) {
 		//print the edge
-		printf( "\t\"%s%d\" ", stuple_to_string(stuple_stack.top()), stuple_stack.top().uniq );
-		printf( "-> \"%s%d\"\n", stuple_to_string(temp), temp.uniq );
+		printf( "\t\"%s_%d\" ", stuple_to_string(stuple_stack.top()), stuple_stack.top().uniq );
+		printf( "-> \"%s_%d\"\n", stuple_to_string(temp), temp.uniq );
 	}
 }
 
@@ -663,6 +686,7 @@ void parser_t::Rel()
 			Rel();
 		case T_openparen:
 			Expr();
+			Rel();
 			break;
 		default:
 			syntax_error(NT_Rel);
@@ -672,7 +696,7 @@ void parser_t::Rel()
 	parsetree.pop();
 }
 
-// void parser_t::ExprP()
+// void parser_t::RelP()
 // {
 // 	// parsetree.push(NT_ExprP);
 // 	switch( scanner.next_token() )
@@ -701,45 +725,26 @@ void parser_t::Rel()
 
 void parser_t::Expr()
 {
-	switch (scanner.next_token())
-	{
-		case T_gt:
-			return;
-		case T_lt:
-			return;
-		case T_eq:
-			return;
-		case T_semicolon:
-			return;
-		case T_eof:
-			parsetree.drawepsilon();
-			return;
-		case T_closeparen:
-			return;
-		default:
-			break;
-	}
-
 	parsetree.push(NT_Expr);
 	switch (scanner.next_token())
 	{
 		case T_num:
 			Term();
-			Expr();
+			ExprP();
 			break;
 		case T_plus:
 			eat_token(T_plus);
 			Term();
-			Expr();
+			ExprP();
 			break;
 		case T_minus:
 			eat_token(T_minus);
 			Term();
-			Expr();
+			ExprP();
 			break;
 		case T_openparen:
 			eat_token(T_openparen);
-			Expr();
+			ExprP();
 			eat_token(T_closeparen);
 			break;
 		default:
@@ -749,77 +754,47 @@ void parser_t::Expr()
 	parsetree.pop();
 }
 
-// void parser_t::TermP()
-// {
-// 	// parsetree.push(NT_TermP);
-// 	switch (scanner.next_token())
-// 	{
-// 		case T_plus:
-// 			break;
-// 		case T_minus:
-// 			return;
-// 		case T_semicolon:
-// 			return;
-// 		case T_times:
-// 			eat_token(T_times);
-// 			Rel();
-// 			TermP();
-// 			break;
-// 		case T_div:
-// 			eat_token(T_div);
-// 			Rel();
-// 			TermP();
-// 			break;
-// 		case T_eof:
-// 			parsetree.drawepsilon();
-// 			return;
-// 		default:
-// 			break;
-// 	}
-// 	// parsetree.pop();	
-// }
-
-void parser_t::Term()
+void parser_t::ExprP()
 {
 	switch (scanner.next_token())
 	{
-		case T_plus:
-			return;
-		case T_minus:
-			return;
 		case T_gt:
 			return;
 		case T_lt:
 			return;
 		case T_eq:
 			return;
+		case T_semicolon:
+			return;
 		case T_eof:
 			parsetree.drawepsilon();
-			return;
-		case T_semicolon:
 			return;
 		case T_closeparen:
 			return;
 		default:
+			Expr();
 			break;
 	}
+}
 
+void parser_t::Term()
+{
 	parsetree.push(NT_Term);
 	switch (scanner.next_token())
 	{
 		case T_num:
 			Fact();
-			Term();
+			TermP();
 			break;
 		case T_div:
 			eat_token(T_div);
 			Fact();
-			Term();
+			TermP();
 			break;
 		case T_times:
 			eat_token(T_times);
 			Fact();
-			Term();
+			TermP();
 			break;
 		case T_openparen:
 			eat_token(T_openparen);
@@ -833,44 +808,32 @@ void parser_t::Term()
 	parsetree.pop();
 }
 
-// void parser_t::RelP()
-// {
-// 	// parsetree.push(NT_RelP);
-// 	switch (scanner.next_token())
-// 	{
-// 		case T_plus:
-// 			return;
-// 		case T_minus:
-// 			return;
-// 		case T_times:
-// 			return;
-// 		case T_div:
-// 			return;
-// 		case T_eof:
-// 			parsetree.drawepsilon();
-// 			return;
-// 		case T_semicolon:
-// 			return;
-// 		case T_eq:
-// 			eat_token(T_eq);
-// 			Fact();
-// 			RelP();
-// 			break;
-// 		case T_lt:
-// 			eat_token(T_lt);
-// 			Fact();
-// 			RelP();
-// 			break;
-// 		case T_gt:
-// 			eat_token(T_gt);
-// 			Fact();
-// 			RelP();
-// 			break;
-// 		default:
-// 			break;
-// 	}
-// 	// parsetree.pop();
-// }
+void parser_t::TermP()
+{
+	switch (scanner.next_token())
+	{
+		case T_plus:
+			return;
+		case T_minus:
+			return;
+		case T_gt:
+			return;
+		case T_lt:
+			return;
+		case T_eq:
+			return;
+		case T_eof:
+			parsetree.drawepsilon();
+			return;
+		case T_semicolon:
+			return;
+		case T_closeparen:
+			return;
+		default:
+			Term();
+			break;
+	}
+}
 
 void parser_t::Fact()
 {
@@ -880,6 +843,8 @@ void parser_t::Fact()
 		case T_num:
 			eat_token(T_num);
 			break;
+		case T_openparen:
+			return;
 		default:
 			syntax_error(NT_Fact);
 			break;
@@ -889,19 +854,19 @@ void parser_t::Fact()
 
 
 
-//5;
-//2;
-//5 + 1;
-//3 * 5;
-//5 + (6);
-//5 + (4 - 6);
-//5 + 3 * 2;
-//5 - 4 - 6;
-//5 - (4 / 6);
-//5 / 2 * 3;
-//5 + 1 < 3 + 4;
-//3 - (3 / 2) > 1 - 1;
-//2 + 2 = 4;
+// 5;
+// 2;
+// 5 + 1;
+// 3 * 5;
+// 5 + (6);
+// 5 + (4 - 6);
+// 5 + 3 * 2;
+// 5 - 4 - 6;
+// 5 - (4 / 6);
+// 5 / 2 * 3;
+// 5 + 1 < 3 + 4;
+// 3 - (3 / 2) > 1 - 1;
+// 2 + 2 = 4;
 
 
 //5 - (4 - 6);
