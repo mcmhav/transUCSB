@@ -514,24 +514,6 @@ void parser_t::List()
 
 	Expr();
 
-	//switch( scanner.next_token() )
-	//{
-	//	case T_num:
-	//		eat_token(T_num);
-	//		test();
-	//		break;
-	//	case T_closeparen:
-	//		eat_token(T_closeparen);
-	//		test();
-	//		break;
-	//	case T_eof:
-	//		parsetree.drawepsilon();
-	//		break;
-	//	default:
-	//		syntax_error(NT_List);
-	//		break;
-	//}
-
 	//now that we are done with List, we can pop it from the data
 	//stucture that is tracking it for drawing the parse tree
 	parsetree.pop();
@@ -596,8 +578,11 @@ void parser_t::Term()
 	parsetree.push(NT_Term);
 	switch (scanner.next_token())
 	{
-		case T_plus:
-
+		case T_num:
+			eat_token(T_num);	//something wrong
+			Fact();
+			TermP();
+			break;
 		default:
 			break;
 	}
@@ -606,22 +591,66 @@ void parser_t::Term()
 
 void parser_t::TermP()
 {
-	
+	parsetree.push(NT_Term);
+	switch (scanner.next_token())
+	{
+		case T_num:
+			eat_token(T_num);	//something wrong
+			Fact();
+			TermP();
+			break;
+		default:
+			break;
+	}
+	parsetree.pop();	
 }
 
 void parser_t::Rel()
 {
-
+	parsetree.push(NT_Term);
+	switch (scanner.next_token())
+	{
+		case T_num:
+			eat_token(T_num);	//something wrong
+			Fact();
+			TermP();
+			break;
+		default:
+			break;
+	}
+	parsetree.pop();
 }
 
 void parser_t::RelP()
 {
-
+	parsetree.push(NT_Term);
+	switch (scanner.next_token())
+	{
+		case T_num:
+			eat_token(T_num);	//something wrong
+			Fact();
+			TermP();
+			break;
+		default:
+			break;
+	}
+	parsetree.pop();
 }
 
 void parser_t::Fact()
 {
-
+	parsetree.push(NT_Term);
+	switch (scanner.next_token())
+	{
+		case T_num:
+			eat_token(T_num);	//something wrong
+			Fact();
+			TermP();
+			break;
+		default:
+			break;
+	}
+	parsetree.pop();
 }
 
 
