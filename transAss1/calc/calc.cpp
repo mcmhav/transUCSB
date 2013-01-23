@@ -608,6 +608,9 @@ void parser_t::List()
 			Rel();
 			List();
 			break;
+		case T_openparen:
+			Expr();
+			break;
 		case T_eof:
 			parsetree.drawepsilon();
 			break;
@@ -707,8 +710,8 @@ void parser_t::Expr()
 		case T_eof:
 			parsetree.drawepsilon();
 			return;
-		// case T_closeparen:
-		// 	return;
+		case T_closeparen:
+			return;
 		default:
 			break;
 	}
@@ -730,11 +733,11 @@ void parser_t::Expr()
 			Term();
 			Expr();
 			break;
-		// case T_openparen:
-		// 	eat_token(T_openparen);
-		// 	Expr();
-		// 	eat_token(T_closeparen);
-		// 	break;
+		case T_openparen:
+			eat_token(T_openparen);
+			Expr();
+			eat_token(T_closeparen);
+			break;
 		default:
 			syntax_error(NT_Expr);
 			break;
@@ -791,8 +794,8 @@ void parser_t::Term()
 			return;
 		case T_semicolon:
 			return;
-		// case T_closeparen:
-		// 	return;
+		case T_closeparen:
+			return;
 		default:
 			break;
 	}
