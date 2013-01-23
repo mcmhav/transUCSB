@@ -589,29 +589,24 @@ void parser_t::List()
 	//the parsetree class is just for drawing the finished
 	//parse tree, and should in should have no effect the actual
 	//parsing of the data
+	switch( scanner.next_token() )
+	{
+		case T_semicolon:
+			eat_token(T_semicolon);
+			break;
+		case T_eof:
+			parsetree.drawepsilon();
+			return;
+		default:
+			break;
+	}	
+
 	parsetree.push(NT_List);
-
-	Expr();
-
-	//now that we are done with List, we can pop it from the data
-	//stucture that is tracking it for drawing the parse tree
-	parsetree.pop();
-}
-
-void parser_t::Expr()
-{
-	parsetree.push(NT_Expr);
-
 	switch( scanner.next_token() )
 	{
 		case T_num:
-			Term();
-			ExprP();
-			break;
-		case T_openparen:
-			eat_token(T_openparen);
-			Expr();
-			eat_token(T_closeparen);
+			Rel();
+			List();
 			break;
 		case T_eof:
 			parsetree.drawepsilon();
@@ -621,133 +616,254 @@ void parser_t::Expr()
 			break;
 	}
 
+	//now that we are done with List, we can pop it from the data
+	//stucture that is tracking it for drawing the parse tree
 	parsetree.pop();
-}
-
-void parser_t::ExprP()
-{
-	parsetree.push(NT_ExprP);
-	switch( scanner.next_token() )
-	{
-		case T_plus:
-			eat_token(T_plus);
-			Term();
-			ExprP();
-			break;
-		case T_minus:
-			eat_token(T_minus);
-			Term();
-			ExprP();
-			break;
-		case T_eof:
-			return;
-		case T_semicolon:
-			eat_token(T_semicolon);
-			Expr();
-			return;
-		default:
-			syntax_error(NT_List);
-			break;
-	}
-	parsetree.pop();
-}
-
-void parser_t::Term()
-{
-	parsetree.push(NT_Term);
-	switch (scanner.next_token())
-	{
-		case T_num:
-			Rel();
-			TermP();
-			break;
-		default:
-			break;
-	}
-	parsetree.pop();
-}
-
-void parser_t::TermP()
-{
-	parsetree.push(NT_TermP);
-	switch (scanner.next_token())
-	{
-		case T_plus:
-			return;
-		case T_minus:
-			return;
-		case T_semicolon:
-			return;
-		case T_times:
-			eat_token(T_times);
-			Rel();
-			TermP();
-			break;
-		case T_div:
-			eat_token(T_div);
-			Rel();
-			TermP();
-			break;
-		case T_eof:
-			return;
-		default:
-			break;
-	}
-	parsetree.pop();	
 }
 
 void parser_t::Rel()
 {
+	switch( scanner.next_token() )
+	{
+		case T_eof:
+			parsetree.drawepsilon();
+			break;
+		case T_semicolon:
+			return;
+		default:
+			break;
+	}
+
+
 	parsetree.push(NT_Rel);
+
+	switch( scanner.next_token() )
+	{
+		case T_num:
+			Expr();
+			Rel();
+			break;
+		case T_lt:
+			eat_token(T_lt);
+			Expr();
+			Rel();
+			break;
+		case T_gt:
+			eat_token(T_gt);
+			Expr();
+			Rel();
+			break;
+		case T_eq:
+			eat_token(T_eq);
+			Expr();
+			Rel();
+		default:
+			syntax_error(NT_Rel);
+			break;
+	}
+
+	parsetree.pop();
+}
+
+// void parser_t::ExprP()
+// {
+// 	// parsetree.push(NT_ExprP);
+// 	switch( scanner.next_token() )
+// 	{
+// 		case T_plus:
+// 			eat_token(T_plus);
+// 			Term();
+// 			ExprP();
+// 			break;
+// 		case T_minus:
+// 			eat_token(T_minus);
+// 			Term();
+// 			ExprP();
+// 			break;
+// 		case T_eof:
+// 			parsetree.drawepsilon();
+// 			return;
+// 		case T_semicolon:
+// 			return;
+// 		default:
+// 			syntax_error(NT_List);
+// 			break;
+// 	}
+// 	// parsetree.pop();
+// }
+
+void parser_t::Expr()
+{
+	switch (scanner.next_token())
+	{
+		case T_gt:
+			return;
+		case T_lt:
+			return;
+		case T_eq:
+			return;
+		case T_semicolon:
+			return;
+		case T_eof:
+			parsetree.drawepsilon();
+			return;
+		// case T_closeparen:
+		// 	return;
+		default:
+			break;
+	}
+
+	parsetree.push(NT_Expr);
 	switch (scanner.next_token())
 	{
 		case T_num:
-			Fact();
-			RelP();
+			Term();
+			Expr();
 			break;
+		case T_plus:
+			eat_token(T_plus);
+			Term();
+			Expr();
+			break;
+		case T_minus:
+			eat_token(T_minus);
+			Term();
+			Expr();
+			break;
+		// case T_openparen:
+		// 	eat_token(T_openparen);
+		// 	Expr();
+		// 	eat_token(T_closeparen);
+		// 	break;
 		default:
+			syntax_error(NT_Expr);
 			break;
 	}
 	parsetree.pop();
 }
 
-void parser_t::RelP()
+// void parser_t::TermP()
+// {
+// 	// parsetree.push(NT_TermP);
+// 	switch (scanner.next_token())
+// 	{
+// 		case T_plus:
+// 			break;
+// 		case T_minus:
+// 			return;
+// 		case T_semicolon:
+// 			return;
+// 		case T_times:
+// 			eat_token(T_times);
+// 			Rel();
+// 			TermP();
+// 			break;
+// 		case T_div:
+// 			eat_token(T_div);
+// 			Rel();
+// 			TermP();
+// 			break;
+// 		case T_eof:
+// 			parsetree.drawepsilon();
+// 			return;
+// 		default:
+// 			break;
+// 	}
+// 	// parsetree.pop();	
+// }
+
+void parser_t::Term()
 {
-	parsetree.push(NT_RelP);
 	switch (scanner.next_token())
 	{
 		case T_plus:
 			return;
 		case T_minus:
 			return;
-		case T_times:
+		case T_gt:
 			return;
-		case T_div:
+		case T_lt:
+			return;
+		case T_eq:
 			return;
 		case T_eof:
+			parsetree.drawepsilon();
 			return;
 		case T_semicolon:
 			return;
-		case T_eq:
-			eat_token(T_eof);
-			Fact();
-			RelP();
+		// case T_closeparen:
+		// 	return;
+		default:
 			break;
-		case T_lt:
-			eat_token(T_lt);
+	}
+
+	parsetree.push(NT_Term);
+	switch (scanner.next_token())
+	{
+		case T_num:
 			Fact();
-			RelP();
+			Term();
 			break;
-		case T_gt:
-			eat_token(T_gt);
+		case T_div:
+			eat_token(T_div);
 			Fact();
-			RelP();
+			Term();
+			break;
+		case T_times:
+			eat_token(T_times);
+			Fact();
+			Term();
+			break;
+		case T_openparen:
+			eat_token(T_openparen);
+			Expr();
+			eat_token(T_closeparen);
 			break;
 		default:
+			syntax_error(NT_Term);
 			break;
 	}
 	parsetree.pop();
 }
+
+// void parser_t::RelP()
+// {
+// 	// parsetree.push(NT_RelP);
+// 	switch (scanner.next_token())
+// 	{
+// 		case T_plus:
+// 			return;
+// 		case T_minus:
+// 			return;
+// 		case T_times:
+// 			return;
+// 		case T_div:
+// 			return;
+// 		case T_eof:
+// 			parsetree.drawepsilon();
+// 			return;
+// 		case T_semicolon:
+// 			return;
+// 		case T_eq:
+// 			eat_token(T_eq);
+// 			Fact();
+// 			RelP();
+// 			break;
+// 		case T_lt:
+// 			eat_token(T_lt);
+// 			Fact();
+// 			RelP();
+// 			break;
+// 		case T_gt:
+// 			eat_token(T_gt);
+// 			Fact();
+// 			RelP();
+// 			break;
+// 		default:
+// 			break;
+// 	}
+// 	// parsetree.pop();
+// }
 
 void parser_t::Fact()
 {
@@ -758,6 +874,7 @@ void parser_t::Fact()
 			eat_token(T_num);
 			break;
 		default:
+			syntax_error(NT_Fact);
 			break;
 	}
 	parsetree.pop();
