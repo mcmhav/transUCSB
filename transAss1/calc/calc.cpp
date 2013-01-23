@@ -170,12 +170,12 @@ void scanner_t::eat_token(token_type c)
 	{
 		if (c == T_num)
 		{
-			tokens.pop_back();
-			numbers.pop_back();
+			tokens.erase(tokens.begin());
+			numbers.erase(numbers.begin());
 		}
 		else
 		{
-			tokens.pop_back();
+			tokens.erase(tokens.begin());
 		}
 	}
 }
@@ -526,7 +526,6 @@ void parser_t::Expr()
 	switch( scanner.next_token() )
 	{
 		case T_num:
-			eat_token(T_num);
 			Term();
 			ExprP();
 			break;
@@ -549,27 +548,26 @@ void parser_t::Expr()
 void parser_t::ExprP()
 {
 	parsetree.push(NT_ExprP);
-
 	switch( scanner.next_token() )
 	{
-		case T_num:
-			eat_token(T_num);
+		case T_plus:
+			eat_token(T_plus);
 			Term();
 			ExprP();
 			break;
-		case T_openparen:
-			eat_token(T_openparen);
-			Expr();
-			eat_token(T_closeparen);
+		case T_minus:
+			eat_token(T_minus);
+			Term();
+			ExprP();
 			break;
 		case T_eof:
-			parsetree.drawepsilon();
-			break;
+			return;
+		case T_semicolon:
+			return;
 		default:
 			syntax_error(NT_List);
 			break;
 	}
-
 	parsetree.pop();
 }
 
@@ -579,8 +577,7 @@ void parser_t::Term()
 	switch (scanner.next_token())
 	{
 		case T_num:
-			eat_token(T_num);	//something wrong
-			Fact();
+			Rel();
 			TermP();
 			break;
 		default:
@@ -591,14 +588,27 @@ void parser_t::Term()
 
 void parser_t::TermP()
 {
-	parsetree.push(NT_Term);
+	parsetree.push(NT_TermP);
 	switch (scanner.next_token())
 	{
-		case T_num:
-			eat_token(T_num);	//something wrong
-			Fact();
+		case T_plus:
+			return;
+		case T_minus:
+			return;
+		case T_semicolon:
+			return;
+		case T_times:
+			eat_token(T_times);
+			Rel();
 			TermP();
 			break;
+		case T_div:
+			eat_token(T_div);
+			Rel();
+			TermP();
+			break;
+		case T_eof:
+			return;
 		default:
 			break;
 	}
@@ -607,13 +617,12 @@ void parser_t::TermP()
 
 void parser_t::Rel()
 {
-	parsetree.push(NT_Term);
+	parsetree.push(NT_Rel);
 	switch (scanner.next_token())
 	{
 		case T_num:
-			eat_token(T_num);	//something wrong
 			Fact();
-			TermP();
+			RelP();
 			break;
 		default:
 			break;
@@ -623,13 +632,35 @@ void parser_t::Rel()
 
 void parser_t::RelP()
 {
-	parsetree.push(NT_Term);
+	parsetree.push(NT_RelP);
 	switch (scanner.next_token())
 	{
-		case T_num:
-			eat_token(T_num);	//something wrong
+		case T_plus:
+			return;
+		case T_minus:
+			return;
+		case T_times:
+			return;
+		case T_div:
+			return;
+		case T_eof:
+			return;
+		case T_semicolon:
+			return;
+		case T_eq:
+			eat_token(T_eof);
 			Fact();
-			TermP();
+			RelP();
+			break;
+		case T_lt:
+			eat_token(T_lt);
+			Fact();
+			RelP();
+			break;
+		case T_gt:
+			eat_token(T_gt);
+			Fact();
+			RelP();
 			break;
 		default:
 			break;
@@ -643,9 +674,7 @@ void parser_t::Fact()
 	switch (scanner.next_token())
 	{
 		case T_num:
-			eat_token(T_num);	//something wrong
-			Fact();
-			TermP();
+			eat_token(T_num);
 			break;
 		default:
 			break;
