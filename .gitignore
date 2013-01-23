@@ -22,3 +22,11 @@ Debug/
 *.opensdf
 *.user
 *.v11.suo
+
+transAss1/calc/*.c
+transAss1/calc/*.defoutput
+transAss1/calc/*.dot
+transAss1/calc/*.png
+transAss1/calc/*.h
+transAss1/calc/calc
+transAss1/calc/calc_def
