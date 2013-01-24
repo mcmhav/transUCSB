@@ -276,8 +276,6 @@ scanner_t::scanner_t()
 
 	while (ca != EOF)     // loop while extraction from file is possible
 	{
-		start:
-
 		ca = getchar();	
 
 		if (isdigit(ca))
@@ -362,7 +360,7 @@ int scanner_t::get_line()
 	// int temp;
 	// temp = *lines.begin();
 	// lines.erase(lines.begin());
-	return *lines.begin();
+	return lines.front();
 }
 
 int scanner_t::get_sline()
@@ -598,20 +596,8 @@ void parser_t::parse()
 	List();
 }
 
-
-// WRITEME: the List() function is not quite right. Right now
-// it is made to parse the grammar: List -> '+' List | EOF
-// which is not a very interesting language. It has been included
-// so you can see the basics of how to structure your recursive
-// decent code.
-
-//Here is an example
 void parser_t::List()
 {
-	//push this non-terminal onto the parse tree.
-	//the parsetree class is just for drawing the finished
-	//parse tree, and should in should have no effect the actual
-	//parsing of the data
 	switch( scanner.next_token() )
 	{
 		case T_semicolon:
@@ -642,13 +628,45 @@ void parser_t::List()
 			syntax_error(NT_List);
 			break;
 	}
-
-	//now that we are done with List, we can pop it from the data
-	//stucture that is tracking it for drawing the parse tree
 	parsetree.pop();
 }
 
 void parser_t::Rel()
+{
+	parsetree.push(NT_Rel);
+	switch( scanner.next_token() )
+	{
+		case T_num:
+			Expr();
+			RelP();
+			break;
+		case T_lt:
+			eat_token(T_lt);
+			Expr();
+			RelP();
+			break;
+		case T_gt:
+			eat_token(T_gt);
+			Expr();
+			RelP();
+			break;
+		case T_eq:
+			eat_token(T_eq);
+			Expr();
+			RelP();
+			break;
+		case T_openparen:
+			Expr();
+			RelP();
+			break;
+		default:
+			syntax_error(NT_Rel);
+			break;
+	}
+	parsetree.pop();
+}
+
+void parser_t::RelP()
 {
 	switch( scanner.next_token() )
 	{
@@ -658,70 +676,10 @@ void parser_t::Rel()
 		case T_semicolon:
 			return;
 		default:
+			Rel();
 			break;
 	}
-
-
-	parsetree.push(NT_Rel);
-
-	switch( scanner.next_token() )
-	{
-		case T_num:
-			Expr();
-			Rel();
-			break;
-		case T_lt:
-			eat_token(T_lt);
-			Expr();
-			Rel();
-			break;
-		case T_gt:
-			eat_token(T_gt);
-			Expr();
-			Rel();
-			break;
-		case T_eq:
-			eat_token(T_eq);
-			Expr();
-			Rel();
-		case T_openparen:
-			Expr();
-			Rel();
-			break;
-		default:
-			syntax_error(NT_Rel);
-			break;
-	}
-
-	parsetree.pop();
 }
-
-// void parser_t::RelP()
-// {
-// 	// parsetree.push(NT_ExprP);
-// 	switch( scanner.next_token() )
-// 	{
-// 		case T_plus:
-// 			eat_token(T_plus);
-// 			Term();
-// 			ExprP();
-// 			break;
-// 		case T_minus:
-// 			eat_token(T_minus);
-// 			Term();
-// 			ExprP();
-// 			break;
-// 		case T_eof:
-// 			parsetree.drawepsilon();
-// 			return;
-// 		case T_semicolon:
-// 			return;
-// 		default:
-// 			syntax_error(NT_List);
-// 			break;
-// 	}
-// 	// parsetree.pop();
-// }
 
 void parser_t::Expr()
 {
@@ -844,7 +802,10 @@ void parser_t::Fact()
 			eat_token(T_num);
 			break;
 		case T_openparen:
-			return;
+			eat_token(T_openparen);
+			Expr();
+			eat_token(T_closeparen);
+			break;
 		default:
 			syntax_error(NT_Fact);
 			break;
