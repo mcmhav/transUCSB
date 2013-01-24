@@ -258,6 +258,7 @@ class scanner_t {
 	// constructor - inits g_next_token
 	scanner_t();
 
+	int get_number();
 
   private:
 
@@ -271,9 +272,9 @@ class scanner_t {
 	// so it should not be that bad
 
 	vector<token_type> tokens;
-	vector<int> numbers;
 	vector<int> lines;		// kinda stupid, but works
 	int line;
+	vector<int> numbers;
 
 	void scan_error(char x);
 	// error message and exit for mismatch
@@ -361,6 +362,13 @@ scanner_t::scanner_t()
  //    std::cout << *i << ' ';
 }
 
+int scanner_t::get_number()
+{
+	// int temp = numbers.front();
+	// cout << temp;
+	// numbers.erase(numbers.begin());
+	return numbers.front();
+}
 
 int scanner_t::get_line()
 {
@@ -416,14 +424,19 @@ class parser_t {
 	void RelP();
 	void Fact();
 
+	vector<int> values;
+	int current_v;
+	vector<token_type> tokens;
+	token_type current_t;
+
+	int final_v;
+
+	void calc();
+
   public:
 	void parse();
 };
 
-
-// This function not only eats the token (moving the scanner forward one
-// token), it also makes sure that token is drawn in the parse tree
-// properly by calling push and pop.
 void parser_t::eat_token(token_type t)
 {
 	parsetree.push(t);
@@ -431,10 +444,6 @@ void parser_t::eat_token(token_type t)
 	parsetree.pop();
 }
 
-// Call this syntax error when you are trying to parse the
-// non-terminal nt, but you fail to find a token that you need
-// to make progress.  You should call this as soon as you can know
-// there is a syntax_error.
 void parser_t::syntax_error(nonterm_type nt)
 {
 	printf("syntax error: found %s in parsing %s - line %d\n",
@@ -444,21 +453,17 @@ void parser_t::syntax_error(nonterm_type nt)
 	exit(1);
 }
 
-// throw a div by zero error, call this function when you detect
-// division by zero (you would use this if you are evaluating the
-// expressions for extra credit)
 void parser_t::div_by_zero_error()
 {
         printf("div by zero error: line %d\n", scanner.get_line() );
         exit(0);
 }
 
-
-// Once the recursive decent parser is set up, you simply call parse()
-// to parse the entire input, all of which can be derived from the start
-// symbol
 void parser_t::parse()
 {
+	current_v = -1;
+	current_t = T_eof;
+	final_v = -1;
 	List();
 }
 
@@ -468,6 +473,12 @@ void parser_t::List()
 	{
 		case T_semicolon:
 			eat_token(T_semicolon);
+			if (values.size() != 0)
+			{
+				calc();
+			}
+			fprintf(stderr, "%d\n", final_v);
+			final_v = 0;
 			break;
 		case T_eof:
 			parsetree.drawepsilon();
@@ -552,11 +563,13 @@ void parser_t::Expr()
 			ExprP();
 			break;
 		case T_plus:
+			current_t = T_plus;
 			eat_token(T_plus);
 			Term();
 			ExprP();
 			break;
 		case T_minus:
+			current_t = T_minus;
 			eat_token(T_minus);
 			Term();
 			ExprP();
@@ -577,12 +590,8 @@ void parser_t::ExprP()
 {
 	switch (scanner.next_token())
 	{
-		case T_gt: return;
-		case T_lt: return;
-		case T_eq: return;
-		case T_semicolon: return;
+		case T_gt: case T_lt: case T_eq: case T_semicolon: case T_closeparen: return;
 		case T_eof: parsetree.drawepsilon(); return;
-		case T_closeparen: return;
 		default: Expr(); break;
 	}
 }
@@ -597,11 +606,13 @@ void parser_t::Term()
 			TermP();
 			break;
 		case T_div:
+			current_t = T_div;
 			eat_token(T_div);
 			Fact();
 			TermP();
 			break;
 		case T_times:
+			current_t = T_times;
 			eat_token(T_times);
 			Fact();
 			TermP();
@@ -622,14 +633,8 @@ void parser_t::TermP()
 {
 	switch (scanner.next_token())
 	{
-		case T_plus: return;
-		case T_minus: return;
-		case T_gt: return;
-		case T_lt: return;
-		case T_eq: return;
+		case T_plus: case T_minus: case T_gt: case T_lt: case T_eq: case T_semicolon: case T_closeparen: return;
 		case T_eof: parsetree.drawepsilon(); return;
-		case T_semicolon: return;
-		case T_closeparen: return;
 		case T_num: syntax_error(NT_Term); break;
 		default: Term(); break;
 	}
@@ -641,6 +646,16 @@ void parser_t::Fact()
 	switch (scanner.next_token())
 	{
 		case T_num:
+
+			if(final_v != -1 && current_t != T_eof)
+			{
+				calc();
+				current_t = T_eof;
+			}
+			else
+			{
+				final_v = scanner.get_number();
+			}
 			eat_token(T_num);
 			break;
 		case T_openparen:
@@ -655,28 +670,56 @@ void parser_t::Fact()
 	parsetree.pop();
 }
 
+void parser_t::calc()
+{
+	cout << current_t;
+	cout << current_v;
+	cout << scanner.get_number();
+	switch (current_t)
+	{
+		case T_plus: 
+			final_v += scanner.get_number();
+			break;
+		case T_minus:
+			final_v -= scanner.get_number();
+			break;
+		case T_times:
+			final_v *= scanner.get_number();
+			break;
+		case T_div: 
+			final_v /= scanner.get_number();
+			break;
+		case T_lt: 
+			break;
+		case T_gt: 
+			break;
+		case T_eq: 
+			break;
+		case T_semicolon: 
+			break;
+		case T_openparen: 
+			break;
+		case T_closeparen: 
+			break;
+		case T_eof: 
+			break;
+		default: break;
+	}
+	cout << final_v;
+}
 
-
-// 5;
-// 2;
-// 5 + 1;
-// 3 * 5;
-// 5 + (6);
-// 5 + (4 - 6);
-// 5 + 3 * 2;
-// 5 - 4 - 6;
-// 5 - (4 / 6);
-// 5 / 2 * 3;
-// 5 + 1 < 3 + 4;
-// 3 - (3 / 2) > 1 - 1;
-// 2 + 2 = 4;
-
-
-//5 - (4 - 6);
-//(5 - (4 - 2)((6))));
-
-// WRITEME: you will need to put the rest of the procedures here
-
+	// T_eof = 0,		// 0: end of file
+	// T_num,			// 1: numbers
+	// T_plus,			// 2: +
+	// T_minus,			// 3: -
+	// T_times,			// 4: *
+ //    T_div,     	 	// 5: /
+ //    T_lt,			// 6: <
+	// T_gt,			// 7: >
+	// T_eq, 			// 8: =
+	// T_semicolon,		// 9: ;
+	// T_openparen,		// 10: (
+	// T_closeparen 	// 11: )
 
 /*** Main ***********************************************/
 
