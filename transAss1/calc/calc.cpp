@@ -261,16 +261,6 @@ class scanner_t {
 	int get_number();
 
   private:
-
-
-	// WRITEME: Figure out what you will need to write the scanner
-	// and to implement the above interface. It does not have to
-	// be a state machine or anything fancy, it's pretty straightforward.
-	// Just read in the characters one at a time from input (getchar would
-	// be a good way) and group them into tokens. All of the tokens in
-	// this calculator are trivial except for the numbers,
-	// so it should not be that bad
-
 	vector<token_type> tokens;
 	vector<int> lines;		// kinda stupid, but works
 	int line;
@@ -288,11 +278,6 @@ token_type scanner_t::next_token()
 
 void scanner_t::eat_token(token_type c)
 {
-	// if we are supposed to eat token c, and it does not match
-	// what we are supposed to be reading from file, then it is a
-	// mismatch error ( call - mismatch_error(c) )
-
-	// WRITEME: cut this bogus stuff out and implement eat_token
 	if (c != next_token()) mismatch_error(c);
 	else 
 	{
@@ -327,9 +312,9 @@ scanner_t::scanner_t()
 				num += ca;
 				ca = getchar();
 			}
-			int temp = atoi(num.c_str());		// atio forces number under MAX_NUMBER
+			long int temp = atol(num.c_str());		// atio forces number under MAX_NUMBER
 
-			if((MAX_NUMBER < temp || temp < 0)) scan_error('O');
+			if((MAX_NUMBER < temp || temp < 0 || num.length() >= 11)) scan_error('O');
 			else
 			{
 				tokens.push_back(T_num);
@@ -364,9 +349,6 @@ scanner_t::scanner_t()
 
 int scanner_t::get_number()
 {
-	// int temp = numbers.front();
-	// cout << temp;
-	// numbers.erase(numbers.begin());
 	return numbers.front();
 }
 
@@ -415,14 +397,14 @@ class parser_t {
 	void syntax_error(nonterm_type);
 	void div_by_zero_error();
 
-	void List();
-	void Expr();
-	void ExprP();
-	void Term();
-	void TermP();
-	void Rel();
-	void RelP();
-	void Fact();
+	int List(int);
+	int Expr(int);
+	int ExprP(int);
+	int Term(int);
+	int TermP(int);
+	int Rel(int);
+	int RelP(int);
+	int Fact();
 
 	vector<int> values;
 	int current_v;
@@ -431,7 +413,6 @@ class parser_t {
 
 	int final_v;
 
-	void calc();
 
   public:
 	void parse();
@@ -461,122 +442,117 @@ void parser_t::div_by_zero_error()
 
 void parser_t::parse()
 {
-	current_v = -1;
-	current_t = T_eof;
 	final_v = -1;
-	List();
+	List(final_v);
 }
 
-void parser_t::List()
+int parser_t::List(int v)
 {
 	switch( scanner.next_token() )
 	{
 		case T_semicolon:
 			eat_token(T_semicolon);
-			if (values.size() != 0)
-			{
-				calc();
-			}
-			fprintf(stderr, "%d\n", final_v);
-			final_v = 0;
+			fprintf(stderr, "%d\n", v);
+			v = -1;
 			break;
-		case T_eof:
-			parsetree.drawepsilon();
-			return;
 		default:
 			break;
 	}	
+
+	switch( scanner.next_token() )
+	{
+		case T_eof:
+			parsetree.drawepsilon();
+			return v;
+		default:
+			break;
+	}	
+
 
 	parsetree.push(NT_List);
 	switch( scanner.next_token() )
 	{
 		case T_num:
-			Rel();
-			List();
+			v = List(Rel(v));
 			break;
 		case T_openparen:
-			Rel();
-			List();
-			break;
-		case T_eof:
-			parsetree.drawepsilon();
+			v = List(Rel(v));
 			break;
 		default:
 			syntax_error(NT_List);
 			break;
 	}
 	parsetree.pop();
+
+	return v;
 }
 
-void parser_t::Rel()
+int parser_t::Rel(int v)
 {
 	parsetree.push(NT_Rel);
 	switch( scanner.next_token() )
 	{
 		case T_num:
-			Expr();
-			RelP();
+			v = RelP(Expr(v));
 			break;
 		case T_lt:
 			eat_token(T_lt);
-			Expr();
-			RelP();
+			if (v < Expr(v)) v = 1;
+			else v = 0;
 			break;
 		case T_gt:
 			eat_token(T_gt);
-			Expr();
-			RelP();
+			if (v > Expr(v)) v = 1;
+			else v = 0;
 			break;
 		case T_eq:
 			eat_token(T_eq);
-			Expr();
-			RelP();
+			if (v == Expr(v)) v = 1;
+			else v = 0;
 			break;
 		case T_openparen:
-			Expr();
-			RelP();
+			v = RelP(Expr(v));
 			break;
 		default:
 			syntax_error(NT_Rel);
 			break;
 	}
 	parsetree.pop();
+	return v;
 }
 
-void parser_t::RelP()
+int parser_t::RelP(int v)
 {
 	switch( scanner.next_token() )
 	{
-		case T_eof: parsetree.drawepsilon(); break;
-		case T_semicolon: return;
-		default: Rel(); break;
+		case T_semicolon: return v;
+		// case T_eof: parsetree.drawepsilon(); break;
+		default: v = Rel(v); break;
 	}
+	return v;
 }
 
-void parser_t::Expr()
+int parser_t::Expr(int v)
 {
 	parsetree.push(NT_Expr);
 	switch (scanner.next_token())
 	{
 		case T_num:
-			Term();
-			ExprP();
+			v = ExprP(Term(v));
 			break;
 		case T_plus:
-			current_t = T_plus;
 			eat_token(T_plus);
-			Term();
-			ExprP();
+			v += Term(v);
+			v = ExprP(v);
 			break;
 		case T_minus:
-			current_t = T_minus;
 			eat_token(T_minus);
-			Term();
-			ExprP();
+			v -= Term(v);
+			v = ExprP(v);
 			break;
 		case T_openparen:
 			eat_token(T_openparen);
-			ExprP();
+			v = ExprP(v);
 			eat_token(T_closeparen);
 			break;
 		default:
@@ -584,42 +560,47 @@ void parser_t::Expr()
 			break;
 	}
 	parsetree.pop();
+	return v;
 }
 
-void parser_t::ExprP()
+int parser_t::ExprP(int v)
 {
 	switch (scanner.next_token())
 	{
-		case T_gt: case T_lt: case T_eq: case T_semicolon: case T_closeparen: return;
-		case T_eof: parsetree.drawepsilon(); return;
-		default: Expr(); break;
+		case T_gt: case T_lt: case T_eq: case T_semicolon: case T_closeparen: return v;
+		// case T_eof: parsetree.drawepsilon(); return v;
+		default: v = Expr(v); break;
 	}
+	return v;
 }
 
-void parser_t::Term()
+int parser_t::Term(int v)
 {
+	int tempd;
 	parsetree.push(NT_Term);
 	switch (scanner.next_token())
 	{
 		case T_num:
-			Fact();
-			TermP();
+			v = TermP(Fact());
 			break;
 		case T_div:
-			current_t = T_div;
 			eat_token(T_div);
-			Fact();
-			TermP();
+			tempd = Fact();
+			if (tempd == 0)
+			{
+				div_by_zero_error();
+			}
+			v /= tempd;
+			v = TermP(v);
 			break;
 		case T_times:
-			current_t = T_times;
 			eat_token(T_times);
-			Fact();
-			TermP();
+			v *= Fact();
+			v = TermP(v);
 			break;
 		case T_openparen:
 			eat_token(T_openparen);
-			Expr();
+			v = Expr(v);
 			eat_token(T_closeparen);
 			break;
 		default:
@@ -627,40 +608,34 @@ void parser_t::Term()
 			break;
 	}
 	parsetree.pop();
+	return v;
 }
 
-void parser_t::TermP()
+int parser_t::TermP(int v)
 {
 	switch (scanner.next_token())
 	{
-		case T_plus: case T_minus: case T_gt: case T_lt: case T_eq: case T_semicolon: case T_closeparen: return;
-		case T_eof: parsetree.drawepsilon(); return;
+		case T_plus: case T_minus: case T_gt: case T_lt: case T_eq: case T_semicolon: case T_closeparen: return v;
+		// case T_eof: parsetree.drawepsilon(); return v;
 		case T_num: syntax_error(NT_Term); break;
-		default: Term(); break;
+		default: v = Term(v); break;
 	}
+	return v;
 }
 
-void parser_t::Fact()
+int parser_t::Fact()
 {
+	int v;
 	parsetree.push(NT_Fact);
 	switch (scanner.next_token())
 	{
 		case T_num:
-
-			if(final_v != -1 && current_t != T_eof)
-			{
-				calc();
-				current_t = T_eof;
-			}
-			else
-			{
-				final_v = scanner.get_number();
-			}
+			v = scanner.get_number();
 			eat_token(T_num);
 			break;
 		case T_openparen:
 			eat_token(T_openparen);
-			Expr();
+			v = Expr(v);
 			eat_token(T_closeparen);
 			break;
 		default:
@@ -668,64 +643,14 @@ void parser_t::Fact()
 			break;
 	}
 	parsetree.pop();
-}
 
-void parser_t::calc()
-{
-	cout << current_t;
-	cout << current_v;
-	cout << scanner.get_number();
-	switch (current_t)
-	{
-		case T_plus: 
-			final_v += scanner.get_number();
-			break;
-		case T_minus:
-			final_v -= scanner.get_number();
-			break;
-		case T_times:
-			final_v *= scanner.get_number();
-			break;
-		case T_div: 
-			final_v /= scanner.get_number();
-			break;
-		case T_lt: 
-			break;
-		case T_gt: 
-			break;
-		case T_eq: 
-			break;
-		case T_semicolon: 
-			break;
-		case T_openparen: 
-			break;
-		case T_closeparen: 
-			break;
-		case T_eof: 
-			break;
-		default: break;
-	}
-	cout << final_v;
+	return v;
 }
-
-	// T_eof = 0,		// 0: end of file
-	// T_num,			// 1: numbers
-	// T_plus,			// 2: +
-	// T_minus,			// 3: -
-	// T_times,			// 4: *
- //    T_div,     	 	// 5: /
- //    T_lt,			// 6: <
-	// T_gt,			// 7: >
-	// T_eq, 			// 8: =
-	// T_semicolon,		// 9: ;
-	// T_openparen,		// 10: (
-	// T_closeparen 	// 11: )
 
 /*** Main ***********************************************/
 
 int main(int argc, char* argv[])
 {
-	// just scanner
 	if (argc > 1) {
 		if (true || strcmp(argv[1], "-s") == 0) {
 			scanner_t scanner;
@@ -743,6 +668,5 @@ int main(int argc, char* argv[])
 		parser.parse();
 	}
 
-	std::getchar();
 	return 0;
 }
