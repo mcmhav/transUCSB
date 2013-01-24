@@ -104,286 +104,6 @@ char* nonterm_to_string(nonterm_type nt)
 	return buffer;
 }
 
-/*** Scanner Class ***********************************************/
-
-class scanner_t {
-  public:
-
-	// eats the next token and prints an error if it is not of type c
-	void eat_token(token_type c);
-
-	// peeks at the lookahead token
-	token_type next_token();
-
-	// return line number for errors
-	int get_line();
-	int get_sline();
-
-	// constructor - inits g_next_token
-	scanner_t();
-
-
-  private:
-
-
-	// WRITEME: Figure out what you will need to write the scanner
-	// and to implement the above interface. It does not have to
-	// be a state machine or anything fancy, it's pretty straightforward.
-	// Just read in the characters one at a time from input (getchar would
-	// be a good way) and group them into tokens. All of the tokens in
-	// this calculator are trivial except for the numbers,
-	// so it should not be that bad
-
-	vector<token_type> tokens;
-	vector<int> numbers;
-	vector<int> lines;		// kinda stupid, but works
-	int line;
-	// This is a bogus member for implementing a useful stub, it should
-	// be cut out once you get the scanner up and going.
-
-	token_type bogo_token;
-	void scan_error(char x);
-	// error message and exit for mismatch
-	void mismatch_error(token_type c);
-
-};
-
-token_type scanner_t::next_token()
-{
-	// WRITEME: replace this bogus junk with code that will take a peek
-	// at the next token and return it to the parser.  It should _not_
-	// actually consume a token - you should be able to call next_token()
-	// multiple times without actually reading any more tokens in
-	//char test = getchar();
-	//if ( bogo_token!=T_plus && bogo_token!=T_eof ) return T_plus;
-	//else return bogo_token;
-	return tokens.front();
-}
-
-void scanner_t::eat_token(token_type c)
-{
-	// if we are supposed to eat token c, and it does not match
-	// what we are supposed to be reading from file, then it is a
-	// mismatch error ( call - mismatch_error(c) )
-
-	// WRITEME: cut this bogus stuff out and implement eat_token
-	if (c != next_token()) mismatch_error(c);
-	else 
-	{
-		if (c == T_num)
-		{
-			tokens.erase(tokens.begin());
-			numbers.erase(numbers.begin());
-			lines.erase(lines.begin());
-		}
-		else
-		{
-			tokens.erase(tokens.begin());
-			lines.erase(lines.begin());
-		}
-	}
-}
-
-// scanner_t::scanner_t()
-// {
-// 	char ca, str[256];
-// 	ifstream is;
-// 	line = 1;
-
-// 	is.open ("test.txt");        // open file
-
-// 	while (is.good())     // loop while extraction from file is possible
-// 	{
-// 		ca = is.get();       // get character from file
-// 		if (is.good())
-// 		{
-// 			if (isdigit(ca))
-// 			{
-// 				string num = "";
-// 				while (isdigit(ca))
-// 				{
-// 					num += ca;
-// 					cout << ca;
-// 					ca = is.get();
-// 				}
-// 				int temp = atoi(num.c_str());		// atio forces number under MAX_NUMBER
-// 				if(MAX_NUMBER > temp || num[9] - 48 <= 7)
-// 				{
-// 					tokens.push_back(T_num);
-// 					numbers.push_back(atoi(num.c_str()));
-// 				}
-// 				else
-// 				{
-// 					scan_error(get_line());
-// 				}
-
-// 			}
-
-// 			switch (ca)
-// 			{
-// 				case '+':
-// 					tokens.push_back(T_plus);
-// 					break;
-// 				case '-':
-// 					tokens.push_back(T_minus);
-// 					break;
-// 				case '*':
-// 					tokens.push_back(T_times);
-// 					break;
-// 				case '/':
-// 					tokens.push_back(T_div);
-// 					break;
-// 				case '<':
-// 					tokens.push_back(T_lt);
-// 					break;
-// 				case '>':
-// 					tokens.push_back(T_gt);
-// 					break;
-// 				case '=':
-// 					tokens.push_back(T_eq);
-// 					break;
-// 				case ';':
-// 					tokens.push_back(T_semicolon);
-// 					break;
-// 				case '(':
-// 					tokens.push_back(T_openparen);
-// 					break;
-// 				case ')':
-// 					tokens.push_back(T_closeparen);
-// 					break;
-// 				case EOF:
-// 					tokens.push_back(T_eof);
-// 					break;
-// 				case '\n':
-// 					line++;
-// 					break;
-// 				default:
-// 					break;
-// 			}
-// 		}
-// 		cout << ca;
-// 	}
-
-// 	is.close();     
-// 	// WRITEME
-// }
-
-scanner_t::scanner_t()
-{
-	char ca;
-
-	line = 1;
-
-	while (ca != EOF)     // loop while extraction from file is possible
-	{
-		ca = getchar();	
-
-		if (isdigit(ca))
-		{
-			string num = "";
-			while (isdigit(ca))
-			{
-				num += ca;
-				ca = getchar();
-			}
-			int temp = atoi(num.c_str());		// atio forces number under MAX_NUMBER
-			if(MAX_NUMBER > temp || num[9] - 48 <= 7)
-			{
-				tokens.push_back(T_num);
-				numbers.push_back(atoi(num.c_str()));
-				lines.push_back(line);
-			}
-			else
-			{
-				scan_error('O');
-			}
-
-		}
-
-		switch (ca)
-		{
-			case ' ':
-				break;
-			case '+':
-				tokens.push_back(T_plus);
-				break;
-			case '-':
-				tokens.push_back(T_minus);
-				break;
-			case '*':
-				tokens.push_back(T_times);
-				break;
-			case '/':
-				tokens.push_back(T_div);
-				break;
-			case '<':
-				tokens.push_back(T_lt);
-				break;
-			case '>':
-				tokens.push_back(T_gt);
-				break;
-			case '=':
-				tokens.push_back(T_eq);
-				break;
-			case ';':
-				tokens.push_back(T_semicolon);
-				break;
-			case '(':
-				tokens.push_back(T_openparen);
-				break;
-			case ')':
-				tokens.push_back(T_closeparen);
-				break;
-			case EOF:
-				tokens.push_back(T_eof);
-				break;
-			case '\n':
-				line++;
-				break;
-			default:
-				scan_error(ca);
-				break;
-		}
-
-		if(ca != ' ')
-		{
-			lines.push_back(line);
-		}
-	}
-
-	// WRITEME
-}
-
-int scanner_t::get_line()
-{
-	// WRITEME
-	// int temp;
-	// temp = *lines.begin();
-	// lines.erase(lines.begin());
-	return lines.front();
-}
-
-int scanner_t::get_sline()
-{
-	// WRITEME
-
-	return line;
-}
-
-void scanner_t::scan_error (char x)
-{
-	printf("scan error: unrecognized character '%c' -line %d\n",x, get_sline());
-	exit(1);
-}
-
-void scanner_t::mismatch_error (token_type x)
-{
-	printf("syntax error: found %s ",token_to_string(next_token()) );
-	printf("expecting %s - line %d\n", token_to_string(x), get_line());
-	exit(1);
-}
-
-
 /*** ParseTree Class **********************************************/
 
 // This class is used to dump the parsed tree as a dot file. As you parse,
@@ -520,6 +240,155 @@ char* parsetree_t::stuple_to_string(const stuple& s)
 }
 
 
+/*** Scanner Class ***********************************************/
+
+class scanner_t {
+  public:
+
+	// eats the next token and prints an error if it is not of type c
+	void eat_token(token_type c);
+
+	// peeks at the lookahead token
+	token_type next_token();
+
+	// return line number for errors
+	int get_line();
+	int get_sline();
+
+	// constructor - inits g_next_token
+	scanner_t();
+
+
+  private:
+
+
+	// WRITEME: Figure out what you will need to write the scanner
+	// and to implement the above interface. It does not have to
+	// be a state machine or anything fancy, it's pretty straightforward.
+	// Just read in the characters one at a time from input (getchar would
+	// be a good way) and group them into tokens. All of the tokens in
+	// this calculator are trivial except for the numbers,
+	// so it should not be that bad
+
+	vector<token_type> tokens;
+	vector<int> numbers;
+	vector<int> lines;		// kinda stupid, but works
+	int line;
+
+	void scan_error(char x);
+	// error message and exit for mismatch
+	void mismatch_error(token_type c);
+};
+
+token_type scanner_t::next_token()
+{
+	return tokens.front();
+}
+
+void scanner_t::eat_token(token_type c)
+{
+	// if we are supposed to eat token c, and it does not match
+	// what we are supposed to be reading from file, then it is a
+	// mismatch error ( call - mismatch_error(c) )
+
+	// WRITEME: cut this bogus stuff out and implement eat_token
+	if (c != next_token()) mismatch_error(c);
+	else 
+	{
+		if (c == T_num)
+		{
+			tokens.erase(tokens.begin());
+			numbers.erase(numbers.begin());
+			lines.erase(lines.begin());
+		}
+		else
+		{
+			tokens.erase(tokens.begin());
+			lines.erase(lines.begin());
+		}
+	}
+}
+
+scanner_t::scanner_t()
+{
+	char ca;
+	line = 1;
+
+	while (ca != EOF)     // loop while extraction from file is possible
+	{
+		ca = getchar();	
+
+		if (isdigit(ca))
+		{
+			string num = "";
+			while (isdigit(ca))
+			{
+				num += ca;
+				ca = getchar();
+			}
+			int temp = atoi(num.c_str());		// atio forces number under MAX_NUMBER
+
+			if((MAX_NUMBER < temp || temp < 0)) scan_error('O');
+			else
+			{
+				tokens.push_back(T_num);
+				numbers.push_back(atoi(num.c_str()));
+				lines.push_back(line);
+			}
+		}
+
+		switch (ca)
+		{
+			case ' ': break;
+			case '+': tokens.push_back(T_plus); break;
+			case '-': tokens.push_back(T_minus); break;
+			case '*': tokens.push_back(T_times); break;
+			case '/': tokens.push_back(T_div); break;
+			case '<': tokens.push_back(T_lt); break;
+			case '>': tokens.push_back(T_gt); break;
+			case '=': tokens.push_back(T_eq); break;
+			case ';': tokens.push_back(T_semicolon); break;
+			case '(': tokens.push_back(T_openparen); break;
+			case ')': tokens.push_back(T_closeparen); break;
+			case EOF: tokens.push_back(T_eof); break;
+			case '\n': line++; break;
+			default: scan_error(ca); break;
+		}
+
+		if(ca != ' ' && ca != '\n') lines.push_back(line);
+	}
+	// for( std::vector<int>::const_iterator i = lines.begin(); i != lines.end(); ++i)
+ //    std::cout << *i << ' ';
+}
+
+
+int scanner_t::get_line()
+{
+	return lines.front();
+}
+
+int scanner_t::get_sline()
+{
+	return line;
+}
+
+void scanner_t::scan_error (char x)
+{
+	printf("scan error: unrecognized character '%c' -line %d\n",x, get_sline());
+	exit(1);
+}
+
+void scanner_t::mismatch_error (token_type x)
+{
+	printf("syntax error: found %s ",token_to_string(next_token()) );
+	printf("expecting %s - line %d\n", token_to_string(x), get_line());
+	exit(1);
+}
+
+
+
+
+
 /*** Parser Class ***********************************************/
 
 // Now on to the big stuff!
@@ -546,9 +415,6 @@ class parser_t {
 	void Rel();
 	void RelP();
 	void Fact();
-
-	// WRITEME: fill this out with the rest of the
-	// recursive decent stuff (more methods)
 
   public:
 	void parse();
@@ -670,14 +536,9 @@ void parser_t::RelP()
 {
 	switch( scanner.next_token() )
 	{
-		case T_eof:
-			parsetree.drawepsilon();
-			break;
-		case T_semicolon:
-			return;
-		default:
-			Rel();
-			break;
+		case T_eof: parsetree.drawepsilon(); break;
+		case T_semicolon: return;
+		default: Rel(); break;
 	}
 }
 
@@ -716,22 +577,13 @@ void parser_t::ExprP()
 {
 	switch (scanner.next_token())
 	{
-		case T_gt:
-			return;
-		case T_lt:
-			return;
-		case T_eq:
-			return;
-		case T_semicolon:
-			return;
-		case T_eof:
-			parsetree.drawepsilon();
-			return;
-		case T_closeparen:
-			return;
-		default:
-			Expr();
-			break;
+		case T_gt: return;
+		case T_lt: return;
+		case T_eq: return;
+		case T_semicolon: return;
+		case T_eof: parsetree.drawepsilon(); return;
+		case T_closeparen: return;
+		default: Expr(); break;
 	}
 }
 
@@ -770,26 +622,16 @@ void parser_t::TermP()
 {
 	switch (scanner.next_token())
 	{
-		case T_plus:
-			return;
-		case T_minus:
-			return;
-		case T_gt:
-			return;
-		case T_lt:
-			return;
-		case T_eq:
-			return;
-		case T_eof:
-			parsetree.drawepsilon();
-			return;
-		case T_semicolon:
-			return;
-		case T_closeparen:
-			return;
-		default:
-			Term();
-			break;
+		case T_plus: return;
+		case T_minus: return;
+		case T_gt: return;
+		case T_lt: return;
+		case T_eq: return;
+		case T_eof: parsetree.drawepsilon(); return;
+		case T_semicolon: return;
+		case T_closeparen: return;
+		case T_num: syntax_error(NT_Term); break;
+		default: Term(); break;
 	}
 }
 
