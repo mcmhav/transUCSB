@@ -19,7 +19,28 @@ As we can see they all handle num and openparen in some way, since these two can
 The openparen will start a new Expr. This is because I don't want the inputs to be (7 + 5 > 8), and the parser will not accept them, I believe this is the right way to handle an input of this kind. EOF is not accepted in any other "states" than the upper level (List). Multiple Rel's are not allowed by choice.
 
 Evaluator: check
-The evaluator is simple. It sends an integer through the whole "tree" and adds to the value when it is safe (when the terminal token is eaten. It there does the operation expected on the current value and the newly fetched one. The tree is used to make sure that precedence is preserved, so inputs like 2 - 6 * 5 will be -28 and not -20. The Relation functions returns a 0 for false and 1 for true like requested in the assignment description. For values divided by 0 there is thrown a "div_by_zero_error" error, as requested. Numbers divided are round automatically by the c++ compiler, as requested.
+The evaluator is simple. It sends an integer through the whole "tree" and adds to the value when it is safe (when the terminal token is eaten. It there does the operation expected on the current value and the newly fetched one. The tree is used to make sure that precedence is preserved, so inputs like 2 - 6 * 5 will be -28 and not -20. The Relation functions returns a 0 for false and 1 for true like requested in the assignment description. For values divided by 0 there is thrown a "div_by_zero_error" error, as requested. Numbers divided are round automatically by the c++ compiler, as requested. Here are some inputs and outputs:
+
+input:
+1 - 6 * (5 + 5) = 1 - 60;
+56 / (6-5) > 50;
+40 * 4 / 2;
+(5 + 1);
+7 > 8;
+1 - 6 * (5 + 5);
+
+output:
+1
+1
+80
+6
+0
+-59
+
 
 Conclusion:
 I believe I have satisfied every request.
+
+
+Name: Martin C Havig
+Email: martihav@stud.ntnu.no
