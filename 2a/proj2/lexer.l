@@ -59,6 +59,8 @@ WRITE ME: put any definitions you need here.  Add your own regular expressions
   }
 */
 
+%x COMMENT
+
 %%
 "bool"     { return BOOL; }
 "else"     { return ELSE; }
@@ -84,12 +86,13 @@ WRITE ME: put any definitions you need here.  Add your own regular expressions
 "*"        { return MULT; }
 "/"        { return DIVIDE; }
 
-"true"     { return TRUE; }
-"false"    { return FALSE; }
-[1-9][0-9]* { printf("decimal"); return DECIMAL; }
-0[xX][0-9A-F]+ { return HEX; }
-[0-7][1-7]* { return OCTAL; }
-[0-1]+b      { return BINARY; }
+"true"          { return TRUE; }
+"false"         { return FALSE; }
+[1-9][0-9]*     { printf("decimal"); return DECIMAL; }
+0[xX][0-9A-F]+  { return HEX; }
+[0-7][1-7]*     { return OCTAL; }
+[0-1]+b         { return BINARY; }
+[a-zA-Z][0-9a-zA-Z] { yylval = yytext[0] - 'a'; return IDENTIFIER; }   
 
 ";"        { return SEMICOLON; }
 ","        { return COMMA; }
@@ -102,10 +105,14 @@ WRITE ME: put any definitions you need here.  Add your own regular expressions
 "]"        { return EAI; }
 "="        { return EQ; }
 
-[a-zA-Z][0-9a-zA-Z] { yylval = yytext[0] - 'a'; return NAME; }   
 \          { ; }
 [ \t\n]    ; 
 .          yyerror((char *) "invalid character");
+
+"[$"                    BEGIN COMMENT;
+<COMMENT>"$]"           BEGIN INITIAL;
+<COMMENT>\n             ;
+<COMMENT>.              // ignore everything else
 
 %%
 
