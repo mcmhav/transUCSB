@@ -25,6 +25,56 @@ highest presidenve unary?
 
 %left T_plus T_minus
 %left T_mult T_div
+%left EQT
+%left GT
+%left GE
+%left LT
+%left BOOL
+
+%token EQ
+%token NE
+%token LE
+%token PLUS
+%token MINUS
+%token MULT
+%token DIVIDE
+%token RPAREN
+%token LPAREN
+%token ASSIGN
+%token SEMICOLON
+%token IF
+%token THEN
+%token ELSE
+%token FI
+%token WHILE
+%token DO
+%token OD
+%token PRINT
+%token NUMBER
+%token NAME
+
+%token INT
+%token VAR
+%token FUNCTION
+%token INTARRAY
+%token RETURN
+%token OR
+%token NOT
+%token COMMA
+%token ABS
+%token SC
+%token EC
+%token BAI
+%token EAI
+%token AND
+
+%token TRUE
+%token FALSE
+%token DECIMAL
+%token HEX
+%token OCTAL
+%token BINARY
+
 %%
 
 /* WRITE ME: This is the language from Project 1(Calculator). You need

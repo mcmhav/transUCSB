@@ -10,19 +10,18 @@ void yyerror(const char *);
 %}
 
 /* 
-  WRITE ME: put any definitions you need here.  Add your own regular expressions
-            below for ALL tokens defined in the manual. You can choose not to use
-	    definitions here.
+WRITE ME: put any definitions you need here.  Add your own regular expressions
+          below for ALL tokens defined in the manual. You can choose not to use
+          definitions here.
 
 */
 
 /*
-Comments will be the hardest - do nothing
-Dont need to think about the lining of the parser and the lexer.
-Will get shift becuase of something, you can end up without shiftcomflict
-If it is reduce it selects the first production rule
-Resolve the conflicts
-
+  Comments will be the hardest - do nothing
+  Dont need to think about the lining of the parser and the lexer.
+  Will get shift becuase of something, you can end up without shiftcomflict
+  If it is reduce it selects the first production rule
+  Resolve the conflicts
 */
 
 /*
@@ -37,16 +36,76 @@ Resolve the conflicts
   the c code.
 */
 
-%%
-\+                    { return T_plus; }
-\*                    { return T_mult; }
-\/                    { return T_div; }
-\-                    { return T_minus; }
-[\*\(\);\+\-\*\/<>=]  { return *yytext; }
-[0-9][0-9]*           { printf("%s ", yytext); }
-[ \t\n]               ; /* skip whitespace */
+/* 
+  \+                    { return T_plus; }
+  \*                    { return T_mult; }
+  \/                    { return T_div; }
+  \-                    { return T_minus; }
 
-.                     yyerror((char *) "invalid character");
+  [\*\(\);\+\-\*\/<>=]  { return *yytext; }
+  [0-9][0-9]*           { printf("%s ", yytext); }
+  [0-9]+     { yylval = atoi(yytext); return NUMBER; }
+
+
+  .        { yyerror("illegal token"); }
+  \n         { nextline(); }
+  \t         { ; }
+  "//".*\n   { nextline(); }
+
+
+  int main(){
+    yylex();
+    return 0;
+  }
+*/
+
+%%
+"bool"     { return BOOL; }
+"else"     { return ELSE; }
+"if"       { return IF; }
+"int"      { return INT; }
+"while"    { return WHILE; }
+"var"      { return VAR; }
+"function" { return FUNCTION; }
+"intarray" { return INTARRAY; }
+"return"   { return RETURN; }
+
+"=="       { return EQT; }
+">"        { return GT; }
+">="       { return GE; }
+"<"        { return LT; }
+"<="       { return LE; }
+"!="       { return NE; }
+"&&"       { return AND; }
+"||"       { return OR; }
+"!"        { return NOT; }
+"+"        { return PLUS; }
+"-"        { return MINUS; }
+"*"        { return MULT; }
+"/"        { return DIVIDE; }
+
+"true"     { return TRUE; }
+"false"    { return FALSE; }
+[1-9][0-9]* { printf("decimal"); return DECIMAL; }
+0[xX][0-9A-F]+ { return HEX; }
+[0-7][1-7]* { return OCTAL; }
+[0-1]+b      { return BINARY; }
+
+";"        { return SEMICOLON; }
+","        { return COMMA; }
+"|"        { return ABS; }
+"{"        { return SC; }
+"}"        { return EC; }
+")"        { return RPAREN; }
+"("        { return LPAREN; }
+"["        { return BAI; }
+"]"        { return EAI; }
+"="        { return EQ; }
+
+[a-zA-Z][0-9a-zA-Z] { yylval = yytext[0] - 'a'; return NAME; }   
+\          { ; }
+[ \t\n]    ; 
+.          yyerror((char *) "invalid character");
 
 %%
 
@@ -55,9 +114,4 @@ Resolve the conflicts
 
 int yywrap(void) {
 	return 1;
-}
-
-int main(){
-  yylex();
-  return 0;
 }
