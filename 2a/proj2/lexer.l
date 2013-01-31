@@ -88,11 +88,11 @@ WRITE ME: put any definitions you need here.  Add your own regular expressions
 
 "true"          { return TRUE; }
 "false"         { return FALSE; }
-[1-9][0-9]*     { printf("decimal"); return DECIMAL; }
+[1-9][0-9]*    { return DECIMAL; }
 0[xX][0-9A-F]+  { return HEX; }
 [0-7][1-7]*     { return OCTAL; }
 [0-1]+b         { return BINARY; }
-[a-zA-Z][0-9a-zA-Z] { yylval = yytext[0] - 'a'; return IDENTIFIER; }   
+[a-zA-Z][0-9a-zA-Z]* { yylval = yytext[0] - 'a'; return IDENTIFIER; }   
 
 ";"        { return SEMICOLON; }
 ","        { return COMMA; }

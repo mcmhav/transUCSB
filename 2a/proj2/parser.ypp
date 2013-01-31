@@ -55,6 +55,7 @@ highest presidenve unary?
 %token HEX
 %token OCTAL
 %token BINARY
+%token IDENTIFIER
 
 %token SEMICOLON
 %token COMMA
@@ -67,67 +68,90 @@ highest presidenve unary?
 %token EAI
 %token EQ
 
-
 %%
 
 /* WRITE ME: This is the language from Project 1(Calculator). You need
 			 to put the productions for the grammar for the
 			 language for this project here*/
 
-ROOT        : 
+ROOT        : funcsq { }
             ;
 
-FUNCTION    : INT IDENTIFIER LPAREN PARM_LIST RPAREN SC BODY_FUNC EC
+funcsq      : funcsq FUNCTION type IDENTIFIER LPAREN parm_list RPAREN SC body_func EC 
+            | FUNCTION type IDENTIFIER LPAREN parm_list RPAREN SC body_func EC
             ;
 
-PARM_LIST   : TYPE IDENTIFIER PARM_LIST
-            | COMMA TYPE IDENTIFIER PARM_LIST
-            | /* nothing */
+parm_list   : type IDENTIFIER parm_list
+            | COMMA type IDENTIFIER parm_list
+            | /* */
             ;
 
-TYPE        : INT
-            | INTARRAY
+type        : INT
             | BOOL
             ;
 
-BODY_FUNC	: VAR_DEC BODY_FUNC
-            | FUNCTION BODY_FUNC
-            | SATATEMENT BODY_FUNC
-            | /* nothing */
+body_func	: var_dec body_func
+            | funcsq body_func
+            | state body_func
+            | array body_func
+            |
             ;
 
-VAR_DEC     : TYPE VAR_DEC SEMICOLON
-            | IDENTIFIER
+var_dec     : VAR type IDENTIFIER var_dec SEMICOLON
+            | COMMA IDENTIFIER var_dec
+            | 
+            ;
+
+array       : VAR INTARRAY BAI exprS EAI IDENTIFIER array SEMICOLON
             | COMMA IDENTIFIER
+            |
             ;
 
-ARRAY       : 
+state       : IDENTIFIER EQ exprS SEMICOLON
+            | IF LPAREN exprS RPAREN SC body_state EC
+            | ELSE SC body_state EC
+            | IDENTIFIER EQ IDENTIFIER LPAREN IDENTIFIER RPAREN SEMICOLON
+            | RETURN exprS SEMICOLON
+            | IDENTIFIER BAI exprS EAI EQ exprS SEMICOLON
+            | RETURN IDENTIFIER BAI exprS EAI SEMICOLON
+            | IDENTIFIER LPAREN RPAREN SEMICOLON
+            | IDENTIFIER EQ IDENTIFIER LPAREN exprS COMMA exprS RPAREN SEMICOLON
+            ;
 
-STATE       : 
+body_state  : state
+            ;
+
+exprS       : exprS RelExpr
+            | RelExpr
+            ;
 
 
-EXPR        : 
+RelExpr     : Expr LT Expr
+            | Expr GT Expr
+            | Expr EQ Expr
+            | Expr
+            ;
+
+Expr        : Expr MULT Expr
+            | Expr PLUS Expr 
+            | Expr MINUS Expr
+            | Expr DIVIDE Expr
+            | fact
+            | MINUS Expr
+            | '(' Expr ')'
+            ;
+
+fact        : DECIMAL
+            | IDENTIFIER
+            | OCTAL
+            | TRUE
+            | FALSE
+            ;
 
 %%
 
 /*
-List    : List RelExpr ';' { }
-        | RelExpr ';'      { }
-        ;
 
-RelExpr : Expr '<' Expr
-        | Expr '>' Expr
-        | Expr '=' Expr
-        | Expr
-        ;
-
-Expr    : Expr '*' Expr
-        | Expr '+' Expr 
-        | Expr '-' Expr
-        | Expr '/' Expr
-        | 'n'
-        | '(' Expr ')'
-        ;
 */
 
 
