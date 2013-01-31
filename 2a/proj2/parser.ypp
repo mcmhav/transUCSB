@@ -74,11 +74,11 @@ highest presidenve unary?
 			 to put the productions for the grammar for the
 			 language for this project here*/
 
-ROOT        : funcsq { }
+ROOT        : funcsq funcsq { }
+            | funcsq
             ;
 
-funcsq      : funcsq FUNCTION type IDENTIFIER LPAREN parm_list RPAREN SC body_func EC 
-            | FUNCTION type IDENTIFIER LPAREN parm_list RPAREN SC body_func EC
+funcsq      : FUNCTION type IDENTIFIER LPAREN parm_list RPAREN SC body_func EC 
             ;
 
 parm_list   : type IDENTIFIER parm_list
@@ -88,63 +88,81 @@ parm_list   : type IDENTIFIER parm_list
 
 type        : INT
             | BOOL
+            | INTARRAY BAI exprS EAI
             ;
 
 body_func	: var_dec body_func
             | funcsq body_func
             | state body_func
-            | array body_func
             |
             ;
 
-var_dec     : VAR type IDENTIFIER var_dec SEMICOLON
-            | COMMA IDENTIFIER var_dec
-            | 
+var_dec     : VAR type IDENTIFIER var_decC SEMICOLON
             ;
 
-array       : VAR INTARRAY BAI exprS EAI IDENTIFIER array SEMICOLON
-            | COMMA IDENTIFIER
+var_decC    : COMMA IDENTIFIER var_decC
             |
             ;
 
 state       : IDENTIFIER EQ exprS SEMICOLON
-            | IF LPAREN exprS RPAREN SC body_state EC
-            | ELSE SC body_state EC
             | IDENTIFIER EQ IDENTIFIER LPAREN IDENTIFIER RPAREN SEMICOLON
-            | RETURN exprS SEMICOLON
             | IDENTIFIER BAI exprS EAI EQ exprS SEMICOLON
-            | RETURN IDENTIFIER BAI exprS EAI SEMICOLON
             | IDENTIFIER LPAREN RPAREN SEMICOLON
             | IDENTIFIER EQ IDENTIFIER LPAREN exprS COMMA exprS RPAREN SEMICOLON
+            | ifstmt
+            | return_stat
             ;
 
-body_state  : state
+return_stat : RETURN exprS SEMICOLON
             ;
 
-exprS       : exprS RelExpr
-            | RelExpr
+ifstmt      : IF LPAREN exprS RPAREN SC state EC ifrest
+            ;
+
+ifrest      : ELSE SC state EC
+            | 
             ;
 
 
-RelExpr     : Expr LT Expr
-            | Expr GT Expr
-            | Expr EQ Expr
-            | Expr
+exprS       : exprS relexpr
+            | relexpr
             ;
 
-Expr        : Expr MULT Expr
-            | Expr PLUS Expr 
-            | Expr MINUS Expr
-            | Expr DIVIDE Expr
-            | fact
-            | MINUS Expr
-            | '(' Expr ')'
+
+relexpr     : relexpr LT expr
+            | relexpr GT expr
+            | relexpr EQ expr
+            | expr
             ;
 
-fact        : DECIMAL
-            | IDENTIFIER
+expr        : expr PLUS term    { $$ = $1 + $3; }
+            | expr MINUS term   { $$ = $1 - $3; }
+            | term
+            ;
+
+term        : term MULT unary    { $$ = $1 * $3; }
+            | term DIVIDE unary  {   if($3 == 0.0)
+                                        yyerror("divide by zero");
+                                    else
+                                        $$ = $1 / $3;
+                                }
+            | unary 
+            ;
+
+unary       : fact
+            | MINUS fact
+            ;
+
+fact        : IDENTIFIER
+            | integer
+            | boolean
+            ;
+
+integer     : DECIMAL
             | OCTAL
-            | TRUE
+            ;
+
+boolean     : TRUE
             | FALSE
             ;
 
