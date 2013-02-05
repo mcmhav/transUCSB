@@ -6,6 +6,9 @@
 #include <string.h>
 #include "parser.hpp"
 
+using namespace std;
+int line_num = 1;
+
 void yyerror(const char *);
 %}
 
@@ -88,11 +91,12 @@ WRITE ME: put any definitions you need here.  Add your own regular expressions
 
 "true"          { return TRUE; }
 "false"         { return FALSE; }
-[1-9][0-9]*    { return DECIMAL; }
-0[xX][0-9A-F]+  { return HEX; }
-[0-7][1-7]*     { return OCTAL; }
-[0-1]+b         { return BINARY; }
-[a-zA-Z][0-9a-zA-Z]* { yylval = yytext[0] - 'a'; return IDENTIFIER; }   
+[1-9][0-9]*     { yylval.value = atoi(yytext);  return DECIMAL; }
+0               { yylval.value = atoi(yytext); return DECIMAL; }
+0[xX][0-9A-F]+  { yylval.value = atoi(yytext);  return HEX; }
+0[0-7]*     { yylval.value = atoi(yytext); return OCTAL; }
+[0-1]+b         { yylval.value = atoi(yytext); return BINARY; }
+[a-zA-Z][0-9a-zA-Z]* { yylval.text = strdup(yytext); return IDENTIFIER; }   
 
 ";"        { return SEMICOLON; }
 ","        { return COMMA; }
@@ -105,14 +109,17 @@ WRITE ME: put any definitions you need here.  Add your own regular expressions
 "]"        { return EAI; }
 "="        { return EQ; }
 
+
 \          { ; }
 [ \t\n]    ; 
 .          yyerror((char *) "invalid character");
 
-"[$"                    BEGIN COMMENT;
+"[$"                    { BEGIN COMMENT; line_num = yylineno; }
 <COMMENT>"$]"           BEGIN INITIAL;
-<COMMENT>\n             ;
-<COMMENT>.              // ignore everything else
+<COMMENT>\n              ;
+<COMMENT>.          ; 
+<COMMENT><<EOF>>     {yylineno = line_num; yyerror((char *) "dangling comment starting");}
+
 
 %%
 

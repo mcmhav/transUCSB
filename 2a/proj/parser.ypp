@@ -1,0 +1,245 @@
+%{
+	#include <stdio.h>
+	#include <stdlib.h>
+	#include <iostream>
+
+	#define YYDEBUG 1
+
+    using namespace std;
+
+	int yylex(void);
+	void yyerror(const char *);
+%}
+
+/* Enables verbose error messages */
+%error-verbose
+
+/* WRITE ME: put all your token definitions here*/
+/* WRITE ME: put all your type definitions here*/
+/* WRITE ME: put all your precedence/associativity rules here*/
+
+/*
+NOTE:
+digits in upper level
+everything exept aritmetic operators will be not be left?
+
+highest presidenve unary?
+*/
+
+
+
+%start ROOT
+
+%token BOOL
+%token ELSE
+%token IF
+%token INT
+%token WHILE
+%token VAR
+%token FUNCTION
+%token INTARRAY
+%token RETURN
+
+%token NOT
+%left LT GT EQ LE GE EQT NE
+%left PLUS MINUS OR AND
+%left MULT DIVIDE
+%left UMINUS
+
+%token TRUE
+%token FALSE
+%token DECIMAL
+%token HEX
+%token OCTAL
+%token BINARY
+%token IDENTIFIER
+
+%token SEMICOLON
+%token COMMA
+%token ABS
+%token SC
+%token EC
+%token RPAREN
+%token LPAREN
+%token BAI
+%token EAI
+
+%code requires {
+    #include <vector>
+    #include <string>
+
+    struct node {
+        struct node * prev;
+        char * val;
+        struct node * next;
+    };
+}
+
+%union
+{
+  int value;
+  char *text;
+  struct node args;
+  char test[];
+  struct
+  {
+    std::vector<char*> *test2;
+  } test2;
+
+  /*
+  std::vector<char*> *funs;
+  ast::ExprList *expr;
+  ast::FuncList *fun;
+  ast::IntList *integer;
+  ast::ÙnaryList *unary
+  ast::IdentiList *IDENTIFIER
+  identifier    *
+  */
+}
+
+%type <args> fun
+%type <value> expr
+%type <value> integer
+%type <value> unary
+%type <text> IDENTIFIER
+
+%%
+
+/* WRITE ME: This is the language from Project 1(Calculator). You need
+			 to put the productions for the grammar for the
+			 language for this project here*/
+
+ROOT        : funcsq { }
+            ;
+
+funcsq      : funcsq fun
+            | fun
+            ;
+
+fun         : FUNCTION type IDENTIFIER LPAREN parm_list RPAREN SC body_func return_stat EC 
+    {
+        /*
+        cout << "-------------------------------------'\n'";
+
+        $$.prev = &$$;
+
+
+        $$.val = $3;
+
+        struct node *temp;
+
+        $$.next = temp;
+
+        cout << $$.val << " val '\n'";
+        cout << "-------------------------------------'\n'";
+
+        cout << $$.next << " next val '\n'";
+        */
+    }
+            ;
+
+parm_list   : type IDENTIFIER parm_list
+            | COMMA type IDENTIFIER parm_list
+            | /* */
+            ;
+
+type        : INT
+            | BOOL
+            | INTARRAY BAI expr EAI
+            ;
+
+body_func	: var_dec body_func
+            | fun body_func
+            | state body_func
+            |
+            ;
+
+var_dec     : VAR type IDENTIFIER var_decC SEMICOLON
+            ;
+
+var_decC    : COMMA IDENTIFIER var_decC
+            |
+            ;
+
+state       : IDENTIFIER EQ expr SEMICOLON
+            | identi
+            | ifstmt
+            | whilestmt
+            ;
+
+whilestmt   : WHILE LPAREN expr RPAREN SC state EC
+            ;
+
+identi      : IDENTIFIER EQ IDENTIFIER LPAREN expr identiC
+            | IDENTIFIER EQ IDENTIFIER LPAREN RPAREN SEMICOLON
+            | IDENTIFIER BAI expr EAI EQ expr SEMICOLON
+            ;
+
+identiC     : COMMA expr identiC
+            | RPAREN SEMICOLON
+            ;
+
+return_stat : RETURN expr SEMICOLON
+            ;
+
+ifstmt      : IF LPAREN expr RPAREN SC state EC ifrest
+            ;
+
+ifrest      : ELSE SC state EC
+            | 
+            ;
+
+expr        : expr LT expr
+            | expr GT expr
+            | expr EQ expr      { $$ = $1 = $3; }
+            | expr OR expr
+            | expr AND expr
+            | expr PLUS expr    { $$ = $1 + $3; }
+            | expr MINUS expr   { $$ = $1 - $3; }
+            | expr MULT expr    { $$ = $1 * $3; }
+            | expr DIVIDE expr  { if($3 == 0.0)
+                                        yyerror("divide by zero");
+                                    else
+                                        $$ = $1 / $3;
+                                 }
+            | unary
+            ;
+
+unary       : fact
+            | MINUS expr  %prec UMINUS
+            | NOT boolean
+            | boolean
+            ;
+
+fact        : IDENTIFIER
+            | IDENTIFIER BAI expr EAI
+            | integer
+            | LPAREN expr RPAREN
+            | ABS expr ABS
+            ;
+
+integer     : DECIMAL 
+            | OCTAL
+            | HEX
+            | BINARY
+            ;
+
+boolean     : TRUE
+            | FALSE
+            ;
+
+%%
+
+/*
+
+*/
+
+
+/*You shouldn't have to do anything past this*/
+
+extern int yylineno;
+
+void yyerror(const char *s) {
+	fprintf(stderr, "%s at line %d\n", s, yylineno);
+	exit(0);
+}

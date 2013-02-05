@@ -8,7 +8,7 @@ int main(void) {
 
 	// set this to 1 if you would like to print a trace 
 	// of the entire parsing process (it prints to stdout)
-        yydebug = 1; 
+        yydebug = 0; 
 
         yyparse();  
 

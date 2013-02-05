@@ -1,0 +1,81 @@
+function int foo()
+{
+    return 0;
+}
+
+function int Main()
+{
+    var int a;
+    a = foo();
+    return 0;
+}
+
+function int foo2(int i, int j, int k)
+{
+    function bool fee(int l, bool m, int n)
+    {
+        return true;
+    }
+    return 0;
+}
+
+function int foo(int i, bool j, int k) { return 0; }
+function int fee(int a, int b) { return 0; }
+function bool fei() { return false; }
+
+function int foo(int i, int j, int k)
+{
+    var int total; [$ variable declarations $]
+    var int i;
+    var bool m, n;
+    var intarray[100] o;
+    var intarray[100] a, b;
+    var int c;
+    c = -5;
+    a[19] = 24 + 3;
+    a[4+2] = 5;
+    b = a;
+    b[3] = b[6] + b[19] + |c|;
+
+    function int square(int t) [$ function declarations $]
+    {
+        var int temp;
+        temp = t * t;
+        return 0;
+    }
+    
+    total = 1; [$ statements $]
+
+    return 0; [$ return statement $]
+}
+
+function int foo() { return 0; }
+function int foo2() { 
+    var int a; a = 2; 
+    var bool b;
+    a = 3 || 2;
+    a = (3 + 2) / 3 - 5 * 2;
+    b = true && false || false;
+    a = 5;
+    a = 0x012;
+    b = true;
+    a = -5;
+    a = c[3] + 5;
+    b = !false;
+
+    a = foo(i, j); [$ "a" has been declared already $]
+
+    if(3 > 2)
+    { 
+        [$ statements... $]
+        i = 5; [$ assuming i has been declared above $]
+    }
+
+    if(true)    { j = 3; }
+    else        { k = 4; }
+
+    while ((true))  { l = 2; }
+
+    return a; 
+}
+
