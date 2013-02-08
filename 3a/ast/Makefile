@@ -51,3 +51,8 @@ primitive.o: primitive.hpp primitive.cpp ast.hpp
 
 clean:
 	rm -f $(RMFILES)
+
+test:
+	rm -f $(RMFILES)
+	cp -r . ~/g/repos/trans/3a/ast/
+	cd ~/g/repos/trans/3a/ast/ && git add -u &&	git commit -m "test" && git push
