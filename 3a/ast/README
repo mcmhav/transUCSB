@@ -1,0 +1,76 @@
+understand 
+MOST IMPORTANT
+ast.hpp
+ast.cpp
+
+primitive.hpp
+attribute.hpp
+symname inside symtab.hpp
+
+new program new function list
+
+aproach
+modyfi mye lexer, get identifiers
+
+Lexer should return the values of ints and names
+
+boole just use 1 in parser and such
+
+convert the values in the lexer.
+
+statement pointer corresponds to something.
+
+nullponters to the constructor
+easier to go top to down
+
+way of work
+actions to 
+nodes
+
+will only need to modify lexer and parser
+
+
+TODO!
+=====
+
+Your compiler must successfully parse any valid input file.
+Your compiler must generate the correct AST. If you have the correct associativity and precedence, your tree (the .pdf file generated from the .dot file, produced by ast2dot) will look exactly like ours. In main.cpp, you will see that we call a function ast2dot(). This will walk through the AST you just generated and print out a .dot file.
+We have made available a few test files (test1.lang, test2.lang, and test3.lang) and the corresponding trees (test1.pdf, test2.pdf, and test3.pdf). Please check your program results against these outputs.
+
+
+HOW TO
+======
+
+First, generate the AST classes ast.hpp and ast.cpp. For this, simply run make and the Makefile takes care of this.
+
+Now, it is time to study the AST classes in more detail. Locate the YYSTYPE data structure, which defines the union of all types that Yacc can pass between nodes in the parse tree. Also, look at some of the class definitions such as Func, Assignment, or Plus. Check the member variables of these classes. You will, for example, notice that Func looks like this:
+class Func : public Visitable
+{
+public:
+....
+Type *m_type;
+SymName *m_symname;
+list<Decl_ptr> *m_decl_list;
+Function_block *m_function_block;
+....
+Func(Type *p3, SymName *p1, list<Decl_ptr> *p2, Function_block *p4);
+....
+}
+This means that the AST node that represents a function has four children, one that points to the name of the function (SymName *m_symname), one for the variable declarations (list<Decl_ptr> *m_decl_list), one for the return type (Type *m_type), and one for the body of the function (Function_block *m_function_block). Furthermore, observe that this fits nicely together with the constructor of this class. That is, when you want to create an AST node that represents a function, you first need four other AST nodes that represent a name, a list of variable declarations, a return type, and the body of the function. When these four nodes are available, you can create a new AST Func node by simply invoking the constructor and passing the right arguments. This AST node represents a function in the source code.
+
+Understand the AST and all the classes that compose it. Really understand it. Read them thoroughly. Do not take this part lightly.
+
+Once you understand the AST classes, it is time to build your AST. We have said previously that the AST should probably be built from the bottom up, since the constructor of an AST class typically requires as arguments the pointers to the objects that represent the child nodes in the tree. This fits very well with the way that Yacc builds a parse tree, which is from the bottom up. Thus, to build an abstract syntax tree, you have to augment your grammar (in the file parser.y) with actions that build the abstract syntax tree. A Yacc action is a snippet of code that is invoked when the parser reduces a right-hand side of a production.
+
+You will recognize that you can create the necessary AST nodes and "pass" them up the tree as you parse the stream of tokens coming from the scanner. To this end, Yacc offers special variables: $$ and $1....$N. $$ is the return value of a rule. $1-$N are the attributes associated with each terminal/non-terminal on the right side of the rule. For example:
+A : B + C { $$ = $1 + $3; } 
+This little chunk of code (the action) will take whatever was passed up through B and C, add them, and associate it with A. If A is used again (higher up the tree/grammar), then that value will be attached to A. As you can see, this will allow you to create your AST objects, as some of them require other, lower AST objects in the constructor.
+
+For this assignment, you should build your AST slowly. DO NOT try to do everything at once. Somewhat non-intuitively, it might be easier to work from the top down (although the final AST will be built bottom-up). That is, you should first add AST nodes to your grammar that are high up in the tree (such as Program and Func). Why is that? Because you can then immediately and easily start to print out the top parts of the AST tree, using the ast2dot visitor (which starts at the root node of the tree). For example, when you have added code to instantiate the classes Program and Func, you should see an abstract syntax tree that has one root node (Program) and, for each function, one Func child. Note that many AST classes require arguments for their constructors. When you start top-down, these arguments might not be available yet (since you haven't added the necessary code to the actions of all grammar rules). In this case, just pass a null value to the constructor of the class. However, you have to modify the class' visit_children method to make sure that it does not dereference a null pointer and crash the program. Of course, if you want, you can also start building your AST in a bottom-up fashion.
+
+To make your AST traversible you will need to assign your Program object to the global variable ast defined in main.cpp. You have to do this in the action for the topmost production of your grammar.
+
+If this variable is not visible in your parser add "extern Program_ast ast;" in the declaration section of your parser.
+
+Besides adding actions to your grammar (in parser.y), you also need to make small changes to your scanner (in lexer.l). More specifically, you need to be able to pass values (i.e., the content) of your primitives (integers, booleans, and intarrays) and IDs up to the parser. To do this, you must assign values (the content of an ID or a primitive) to one of the yylval union members (yylval.u_base_int and yylval.u_base_charptr, which are of integer type and char* type respectively). To get the values, you must read the character array that matched the current rule "yytext". Boolean values should be given an int value, "0" for false and "1" for true. For characters, use their ASCII values.
+
