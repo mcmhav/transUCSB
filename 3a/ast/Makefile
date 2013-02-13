@@ -55,4 +55,4 @@ clean:
 push:
 	rm -f $(RMFILES)
 	cp -r . ~/g/repos/trans/3a/ast/
-	cd ~/g/repos/trans/3a/ast/ && git add -u &&	git commit -m "done" && git push
+	cd ~/g/repos/trans/3a/ast/ && git add -u &&	git commit -m "message" && git push

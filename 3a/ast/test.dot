@@ -128,9 +128,9 @@ digraph G {
 "63" -> "64"
 "64" [label="TInt"]
 "63" -> "65"
-"65" [label="SymName\n\"j\""]
+"65" [label="SymName\n\"k\""]
 "63" -> "66"
-"66" [label="SymName\n\"k\""]
+"66" [label="SymName\n\"j\""]
 "59" -> "67"
 "67" [label="Decl"]
 "67" -> "68"
@@ -252,9 +252,9 @@ digraph G {
 "125" -> "126"
 "126" [label="TInt"]
 "125" -> "127"
-"127" [label="SymName\n\"a\""]
+"127" [label="SymName\n\"i\""]
 "125" -> "128"
-"128" [label="SymName\n\"i\""]
+"128" [label="SymName\n\"a\""]
 "124" -> "129"
 "129" [label="Return"]
 "129" -> "130"

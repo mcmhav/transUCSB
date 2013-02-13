@@ -75,18 +75,16 @@ funcsq      : funcsq fun
             ;
 
 fun         : FUNCTION type IDENTIFIER LPAREN parm_list RPAREN SC body_func  
-        { $$.u_func = new Func($2.u_type, new SymName($3.u_base_charptr), $5.u_param_list, $8.u_function_block);
-            // Func(Type *p1, SymName *p2, list<Param_ptr> *p3, Function_block *p4);
-        }
+        { $$.u_func = new Func($2.u_type, new SymName($3.u_base_charptr), $5.u_param_list, $8.u_function_block); }
             ;
 
 parm_list   : type IDENTIFIER parm_list
         { list<Param_ptr> *parm_list = $3.u_param_list;
-          parm_list->push_back(new Param($1.u_type, new SymName($2.u_base_charptr)));
+          parm_list->push_front(new Param($1.u_type, new SymName($2.u_base_charptr)));
           $$.u_param_list = parm_list; }
             | COMMA type IDENTIFIER parm_list
         { list<Param_ptr> *parm_list = $4.u_param_list;
-          parm_list->push_back(new Param($2.u_type, new SymName($3.u_base_charptr)));
+          parm_list->push_front(new Param($2.u_type, new SymName($3.u_base_charptr)));
           $$.u_param_list = parm_list; }
             | { $$.u_param_list = new list<Param_ptr>(); }
             ;
@@ -95,12 +93,8 @@ type        : INT  { $$.u_type = new TInt(); }
             | BOOL { $$.u_type = new TBool(); }
             ;
 
-
-            //  Function_block(list<Decl_ptr> *p1, list<Func_ptr> *p2, list<Stat_ptr> *p3, Return *p4);
 body_func   : declList funcList statList RETURN expr SEMICOLON EC
-        {
-          $$.u_function_block = new Function_block($1.u_decl_list, $2.u_func_list, $3.u_stat_list, new Return($5.u_expr));
-        }
+        { $$.u_function_block = new Function_block($1.u_decl_list, $2.u_func_list, $3.u_stat_list, new Return($5.u_expr)); }
 
 declList    : var_dec declList
         { list<Decl_ptr> *decl_list = $2.u_decl_list;
@@ -130,13 +124,13 @@ var_type    : type
 
 var_dec     : VAR var_type IDENTIFIER var_decC SEMICOLON
         { list<SymName_ptr> *symname_list = $4.u_symname_list;
-          symname_list->push_back(new SymName($3.u_base_charptr));
+          symname_list->push_front(new SymName($3.u_base_charptr));
           $$.u_decl = new Decl($2.u_type, symname_list); }
             ;
 
 var_decC    : COMMA IDENTIFIER var_decC
         { list<SymName_ptr> *symname_list = $3.u_symname_list;
-          symname_list->push_back(new SymName($2.u_base_charptr));
+          symname_list->push_front(new SymName($2.u_base_charptr));
           $$.u_symname_list = symname_list; }
             | { $$.u_symname_list = new list<SymName_ptr>(); }
             ;
