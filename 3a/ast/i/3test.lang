@@ -3,8 +3,8 @@ function int foo(int x)
     var bool ok;
     ok = true;
     while (i<10) {
-    while ((ok)) {
-        ok = !ok;
+        while ((ok)) {
+            ok = !ok;
         }
     }
     return 2*x;

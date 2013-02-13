@@ -7,6 +7,10 @@
 #include "ast.hpp"
 #include "parser.hpp"
 #include <assert.h>
+    #include <iostream>
+
+    using namespace std;
+
 
 extern int yydebug; // set this to 1 if you want yyparse to dump a trace
 extern int yyparse(); // this actually the parser which then calls the scanner
@@ -18,13 +22,13 @@ int main(void) {
 
 	// set this to 1 if you would like to print a trace 
 	// of the entire parsing process (it prints to stdout)
-        yydebug = 0; 
+        yydebug = 1; 
 
         yyparse();  
 
         // walk over the ast and print it out as a dot file
         if (ast) dopass_ast2dot( ast );
-        return 0;
 
+        return 0;
 }
 

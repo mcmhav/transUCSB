@@ -1,28 +1,210 @@
 %{
 	#include <stdio.h>
 	#include <stdlib.h>
+  #include <iostream>
+  #include <sstream>
+  #include <bitset>
 
-    	#include "ast.hpp"
-    	#include "primitive.hpp"
-    	#include "symtab.hpp"
+  #include "ast.hpp"
+  #include "primitive.hpp"
+  #include "symtab.hpp"
+
+  using namespace std;
 
 	#define YYDEBUG 1
 
-    	extern Program_ptr ast;
+  extern Program_ptr ast;
 	int yylex(void);
 	void yyerror(const char *);
+  int str2bin(const char *);
 %}
 
 /* Enables verbose error messages */
 %error-verbose
 
+%start ROOT
 
-/* Insert your grammar into below section. Please don't just overwrite the file because of the enhanced header section. */
+%token BOOL
+%token ELSE
+%token IF
+%token WHILE
+%token VAR
+%token FUNCTION
+%token INTARRAY
+%token RETURN
+
+%token NOT
+
+%token TRUE
+%token FALSE
+%token INT
+%token IDENTIFIER
+
+%token SEMICOLON
+%token COMMA
+%token ABS
+%token SC
+%token EC
+%token RPAREN
+%token LPAREN
+%token BAI
+%token EAI
+
+%right EQ
+%left OR
+%left AND
+%left EQT NE
+%left LT GT LE GE  
+%left PLUS MINUS  
+%left MULT DIVIDE
+%left UMINUS
 
 %%
 
-insertyourgrammarhere   :
-			;
+ROOT        : fun funcsq 
+        { list<Func_ptr> *func_list = $2.u_func_list;
+          func_list->push_front($1.u_func);
+          ast = new Program(func_list);}
+            ;
+
+funcsq      : funcsq fun
+        { list<Func_ptr> *func_list = $1.u_func_list;
+          func_list->push_back($2.u_func);
+          $$.u_func_list = func_list; }
+            | { $$.u_func_list = new list<Func_ptr>(); }
+            ;
+
+fun         : FUNCTION type IDENTIFIER LPAREN parm_list RPAREN SC body_func  
+        { $$.u_func = new Func($2.u_type, new SymName($3.u_base_charptr), $5.u_param_list, $8.u_function_block);
+            // Func(Type *p1, SymName *p2, list<Param_ptr> *p3, Function_block *p4);
+        }
+            ;
+
+parm_list   : type IDENTIFIER parm_list
+        { list<Param_ptr> *parm_list = $3.u_param_list;
+          parm_list->push_back(new Param($1.u_type, new SymName($2.u_base_charptr)));
+          $$.u_param_list = parm_list; }
+            | COMMA type IDENTIFIER parm_list
+        { list<Param_ptr> *parm_list = $4.u_param_list;
+          parm_list->push_back(new Param($2.u_type, new SymName($3.u_base_charptr)));
+          $$.u_param_list = parm_list; }
+            | { $$.u_param_list = new list<Param_ptr>(); }
+            ;
+
+type        : INT  { $$.u_type = new TInt(); }
+            | BOOL { $$.u_type = new TBool(); }
+            ;
+
+
+            //  Function_block(list<Decl_ptr> *p1, list<Func_ptr> *p2, list<Stat_ptr> *p3, Return *p4);
+body_func   : declList funcList statList RETURN expr SEMICOLON EC
+        {
+          $$.u_function_block = new Function_block($1.u_decl_list, $2.u_func_list, $3.u_stat_list, new Return($5.u_expr));
+        }
+
+declList    : var_dec declList
+        { list<Decl_ptr> *decl_list = $2.u_decl_list;
+          decl_list->push_front($1.u_decl);
+          $$.u_decl_list = decl_list; }
+            | { $$.u_decl_list = new list<Decl_ptr>(); }
+            ;
+
+funcList    : fun funcList
+        { list<Func_ptr> *func_list = $2.u_func_list;
+          func_list->push_front($1.u_func);
+          $$.u_func_list = func_list; }   
+            | { $$.u_func_list = new list<Func_ptr>(); }
+            ;
+
+statList    : state statList
+        { list<Stat_ptr> *stat_list = $2.u_stat_list;
+          stat_list->push_front($1.u_stat);
+          $$.u_stat_list = stat_list; }
+            | { $$.u_stat_list = new list<Stat_ptr>(); }
+            ;
+
+var_type    : type
+            | INTARRAY BAI INT EAI { 
+            $$.u_type = new TIntArray(new Primitive($3.u_base_int)); }
+            ;
+
+var_dec     : VAR var_type IDENTIFIER var_decC SEMICOLON
+        { list<SymName_ptr> *symname_list = $4.u_symname_list;
+          symname_list->push_back(new SymName($3.u_base_charptr));
+          $$.u_decl = new Decl($2.u_type, symname_list); }
+            ;
+
+var_decC    : COMMA IDENTIFIER var_decC
+        { list<SymName_ptr> *symname_list = $3.u_symname_list;
+          symname_list->push_back(new SymName($2.u_base_charptr));
+          $$.u_symname_list = symname_list; }
+            | { $$.u_symname_list = new list<SymName_ptr>(); }
+            ;
+
+state       : IDENTIFIER EQ expr SEMICOLON 
+        { $$.u_stat = new Assignment(new SymName($1.u_base_charptr), $3.u_expr); }
+            | identi
+            | ifstmt
+            | whilestmt
+            ;
+
+whilestmt   : WHILE LPAREN expr RPAREN SC statList EC
+        { $$.u_stat = new WhileLoop($3.u_expr, new Nested_block($6.u_stat_list)); }
+            ;
+
+identi      : IDENTIFIER EQ IDENTIFIER LPAREN parm RPAREN SEMICOLON
+        { $$.u_stat = new Call(new SymName($1.u_base_charptr), new SymName($3.u_base_charptr), $5.u_expr_list); }
+            | IDENTIFIER BAI expr EAI EQ expr SEMICOLON
+        { $$.u_stat = new ArrayAssignment(new SymName($1.u_base_charptr), $3.u_expr, $6.u_expr); }
+            ;
+
+parm        : expr parms 
+        { list<Expr_ptr> *expression_list = $2.u_expr_list;
+          expression_list->push_front($1.u_expr);
+          $$.u_expr_list = expression_list; }
+            | { $$.u_expr_list = new list<Expr_ptr>(); }
+            ;
+
+parms       : COMMA expr parms
+        { list<Expr_ptr> *expression_list = $3.u_expr_list;
+          expression_list->push_back($2.u_expr);
+          $$.u_expr_list = expression_list; }
+            | { $$.u_expr_list = new list<Expr_ptr>(); }
+            ;
+
+ifstmt      : IF LPAREN expr RPAREN SC statList EC ifrest
+        { if ($8.u_nested_block == NULL ) {
+            $$.u_stat = new IfNoElse($3.u_expr, new Nested_block($6.u_stat_list));
+          }else {
+            $$.u_stat = new IfWithElse($3.u_expr, new Nested_block($6.u_stat_list), $8.u_nested_block);} }
+            ;
+
+ifrest      : ELSE SC statList EC { $$.u_nested_block = new Nested_block($3.u_stat_list); }
+            | { $$.u_nested_block = NULL; }
+            ;
+
+expr        : expr EQT expr     { $$.u_expr = new Compare($1.u_expr, $3.u_expr); }
+            | expr LT expr      { $$.u_expr = new Lt($1.u_expr, $3.u_expr); }
+            | expr GT expr      { $$.u_expr = new Gt($1.u_expr, $3.u_expr); }
+            | expr OR expr      { $$.u_expr = new Or($1.u_expr, $3.u_expr); }
+            | expr AND expr     { $$.u_expr = new And($1.u_expr, $3.u_expr); }
+            | expr NE expr      { $$.u_expr = new Noteq($1.u_expr, $3.u_expr); }
+            | expr GE expr      { $$.u_expr = new Gteq($1.u_expr, $3.u_expr); }
+            | expr LE expr      { $$.u_expr = new Lteq($1.u_expr, $3.u_expr); }
+            | expr PLUS expr    { $$.u_expr = new Plus($1.u_expr, $3.u_expr); }
+            | expr MINUS expr   { $$.u_expr = new Minus($1.u_expr, $3.u_expr); }
+            | expr MULT expr    { $$.u_expr = new Times($1.u_expr, $3.u_expr); }
+            | expr DIVIDE expr  { $$.u_expr = new Div($1.u_expr, $3.u_expr); }
+            | MINUS expr        %prec UMINUS  { $$.u_expr = new Uminus($2.u_expr); }
+            | NOT expr          %prec UMINUS  { $$.u_expr = new Not($2.u_expr); }
+            | TRUE              { $$.u_expr = new BoolLit(new Primitive(1)); }
+            | FALSE             { $$.u_expr = new BoolLit(new Primitive(0)); }
+            | IDENTIFIER BAI expr EAI  { $$.u_expr = new ArrayAccess(new SymName($1.u_base_charptr), $3.u_expr); }
+            | ABS expr ABS      { $$.u_expr = new Magnitude($2.u_expr); }
+            | LPAREN expr RPAREN { $$.u_expr = $2.u_expr; }
+            | IDENTIFIER         { $$.u_expr = new Ident(new SymName($1.u_base_charptr)); }
+            | INT { $$.u_expr = new IntLit(new Primitive($1.u_base_int)); }
+            ;
 
 %%
 
@@ -32,4 +214,21 @@ void yyerror(const char *s) {
 	fprintf(stderr, "%s at line %d\n", s, yylineno);
 	exit(1);
 	return;
+}
+
+int getIntValue(const char* i, int t){
+  unsigned int x;
+  stringstream ss;
+  switch(t){
+    case 0: return atoi(i); break;                      // decimal
+    case 1: ss << hex << i; ss >> x; return x; break;   // hex
+    case 2: ss << oct << i; ss >> x; return x; break;   // oct
+    case 3: return str2bin(i); break;   // binary
+    default: yyerror("SHIT!!, don't call this like that"); break;
+  }
+}
+
+int str2bin(const char *s) {
+    if (*s == 'b') return 0;
+    return ((*s - '0') << ((strchr(s, 'b') - s) - 1)) | str2bin(s + 1);
 }
