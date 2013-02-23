@@ -57,3 +57,4 @@ push:
 	rm -f $(RMFILES)
 	cp -r . ~/g/repos/trans/4a/typecheck/
 	cd ~/g/repos/trans/4a/typecheck/ && git add -u &&	git commit -m "message" && git push
+	
