@@ -249,87 +249,241 @@ public:
   LatticeElemMap* visitAnd(And *p, LatticeElemMap *in)
   {
     in = visit_children_of(p, in);
+
+    LatticeElem &e1 = p -> m_expr_1 -> m_attribute.m_lattice_elem;
+    LatticeElem &e2 = p -> m_expr_2 -> m_attribute.m_lattice_elem;
+
+    if (e1 == TOP || e2 == TOP){
+      if(e1.value == 0 || e2.value == 0){
+        p->m_attribute.m_lattice_elem = 0;
+        return in;
+      }
+      p->m_attribute.m_lattice_elem = TOP;
+    }
+    else
+      p->m_attribute.m_lattice_elem = (e1.value*e2.value);
+
     return in;
   }
-  
   LatticeElemMap* visitOr(Or *p, LatticeElemMap *in)
   {
     in = visit_children_of(p, in);
+
+    LatticeElem &e1 = p -> m_expr_1 -> m_attribute.m_lattice_elem;
+    LatticeElem &e2 = p -> m_expr_2 -> m_attribute.m_lattice_elem;
+
+    if (e1 == TOP || e2 == TOP)
+      p->m_attribute.m_lattice_elem = TOP;
+    else {
+      if (e1.value == 1 || e2.value == 1){
+        p->m_attribute.m_lattice_elem = 1;
+      } else {
+        p->m_attribute.m_lattice_elem = 0;
+      }
+    }
+
     return in;
   }
-
   LatticeElemMap* visitCompare(Compare *p, LatticeElemMap *in)
   {
     in = visit_children_of(p, in);
+
+    LatticeElem &e1 = p -> m_expr_1 -> m_attribute.m_lattice_elem;
+    LatticeElem &e2 = p -> m_expr_2 -> m_attribute.m_lattice_elem;
+
+    if (e1 == TOP || e2 == TOP)
+      p->m_attribute.m_lattice_elem = TOP;
+    else{
+      if (e1.value == e2.value){
+        p->m_attribute.m_lattice_elem = 1;
+      } else
+        p->m_attribute.m_lattice_elem = 0;
+    }
+
     return in;
   }
-  
   LatticeElemMap* visitNoteq(Noteq *p, LatticeElemMap *in)
   {
     in = visit_children_of(p, in);
+
+    LatticeElem &e1 = p -> m_expr_1 -> m_attribute.m_lattice_elem;
+    LatticeElem &e2 = p -> m_expr_2 -> m_attribute.m_lattice_elem;
+
+    if (e1 == TOP || e2 == TOP)
+      p->m_attribute.m_lattice_elem = TOP;
+    else{
+      if (e1.value != e2.value){
+        p->m_attribute.m_lattice_elem = 1;
+      } else
+        p->m_attribute.m_lattice_elem = 0;
+    }
+
     return in;
   }
-
   LatticeElemMap* visitGt(Gt *p, LatticeElemMap *in)
   {
     in = visit_children_of(p, in);
+
+    LatticeElem &e1 = p -> m_expr_1 -> m_attribute.m_lattice_elem;
+    LatticeElem &e2 = p -> m_expr_2 -> m_attribute.m_lattice_elem;
+
+    if (e1 == TOP || e2 == TOP)
+      p->m_attribute.m_lattice_elem = TOP;
+    else{
+      if (e1.value >= e2.value){
+        p->m_attribute.m_lattice_elem = 1;
+      } else
+        p->m_attribute.m_lattice_elem = 0;
+    }
+
     return in;
   }
-
   LatticeElemMap* visitGteq(Gteq *p, LatticeElemMap *in)
   {
     in = visit_children_of(p, in);
+
+    LatticeElem &e1 = p -> m_expr_1 -> m_attribute.m_lattice_elem;
+    LatticeElem &e2 = p -> m_expr_2 -> m_attribute.m_lattice_elem;
+
+    if (e1 == TOP || e2 == TOP)
+      p->m_attribute.m_lattice_elem = TOP;
+    else{
+      if (e1.value >= e2.value){
+        p->m_attribute.m_lattice_elem = 1;
+      } else
+        p->m_attribute.m_lattice_elem = 0;
+    }
+
     return in;
   }
-
   LatticeElemMap* visitLt(Lt *p, LatticeElemMap *in)
   {
     in = visit_children_of(p, in);
+
+    LatticeElem &e1 = p -> m_expr_1 -> m_attribute.m_lattice_elem;
+    LatticeElem &e2 = p -> m_expr_2 -> m_attribute.m_lattice_elem;
+
+    if (e1 == TOP || e2 == TOP)
+      p->m_attribute.m_lattice_elem = TOP;
+    else{
+      if (e1.value < e2.value){
+        p->m_attribute.m_lattice_elem = 1;
+      } else
+        p->m_attribute.m_lattice_elem = 0;
+    }
+    
     return in;
   }
-
   LatticeElemMap* visitLteq(Lteq *p, LatticeElemMap *in)
   {
     in = visit_children_of(p, in);
+
+    LatticeElem &e1 = p -> m_expr_1 -> m_attribute.m_lattice_elem;
+    LatticeElem &e2 = p -> m_expr_2 -> m_attribute.m_lattice_elem;
+
+    if (e1 == TOP || e2 == TOP)
+      p->m_attribute.m_lattice_elem = TOP;
+    else{
+      if (e1.value <= e2.value){
+        p->m_attribute.m_lattice_elem = 1;
+      } else
+        p->m_attribute.m_lattice_elem = 0;
+    }
+    
     return in;
   }
-
   LatticeElemMap* visitUminus(Uminus *p, LatticeElemMap *in)
   {
     in = visit_children_of(p, in);
+
+    LatticeElem &e = p -> m_expr -> m_attribute.m_lattice_elem;
+
+    if (e == TOP)
+      p->m_attribute.m_lattice_elem = TOP;
+    else
+      p->m_attribute.m_lattice_elem = -(e.value);
+
     return in;
   }
-  
   LatticeElemMap* visitMagnitude(Magnitude *p, LatticeElemMap *in)
   {
     in = visit_children_of(p, in);
+
+    LatticeElem &e = p -> m_expr -> m_attribute.m_lattice_elem;
+
+    if (e == TOP)
+      p->m_attribute.m_lattice_elem = TOP;
+    else
+      p->m_attribute.m_lattice_elem = (e.value*e.value);
+
     return in;
   }
-
   LatticeElemMap* visitPlus(Plus *p, LatticeElemMap *in)
   {
     in = visit_children_of(p, in);
+
+    LatticeElem &e1 = p -> m_expr_1 -> m_attribute.m_lattice_elem;
+    LatticeElem &e2 = p -> m_expr_2 -> m_attribute.m_lattice_elem;
+
+    if (e1 == TOP || e2 == TOP)
+      p->m_attribute.m_lattice_elem = TOP;
+    else
+      p->m_attribute.m_lattice_elem = (e1.value+e2.value);
+
     return in;
   }
-
   LatticeElemMap* visitMinus(Minus *p, LatticeElemMap *in)
   {
     in = visit_children_of(p, in);
+
+    LatticeElem &e1 = p -> m_expr_1 -> m_attribute.m_lattice_elem;
+    LatticeElem &e2 = p -> m_expr_2 -> m_attribute.m_lattice_elem;
+
+    if (e1 == TOP || e2 == TOP)
+      p->m_attribute.m_lattice_elem = TOP;
+    else
+      p->m_attribute.m_lattice_elem = (e1.value-e2.value);
+
     return in;
   }
-
   LatticeElemMap* visitTimes(Times *p, LatticeElemMap *in)
   {
     in = visit_children_of(p, in);
+    
+    LatticeElem &e1 = p -> m_expr_1 -> m_attribute.m_lattice_elem;
+    LatticeElem &e2 = p -> m_expr_2 -> m_attribute.m_lattice_elem;
+
+    if (e1 == TOP || e2 == TOP){
+      if (e1.value == 0 || e2.value == 0) {
+        p->m_attribute.m_lattice_elem = 0;
+        return in;
+      }
+      p->m_attribute.m_lattice_elem = TOP;
+    }
+    else {
+      p->m_attribute.m_lattice_elem = (e1.value*e2.value);
+    }
     return in;
   }
-
   LatticeElemMap* visitDiv(Div *p, LatticeElemMap *in)
   {
     in = visit_children_of(p, in);
+
+    LatticeElem &e1 = p -> m_expr_1 -> m_attribute.m_lattice_elem;
+    LatticeElem &e2 = p -> m_expr_2 -> m_attribute.m_lattice_elem;
+
+    if (e1 == TOP || e2 == TOP){
+      if (e1.value == 0) {
+        p->m_attribute.m_lattice_elem = 0;
+        return in;
+      }
+      p->m_attribute.m_lattice_elem = TOP;
+    }
+    else
+      p->m_attribute.m_lattice_elem = (e1.value/e2.value);
+
     return in;
   }
-
   LatticeElemMap* visitNot(Not *p, LatticeElemMap *in)
   {
     // First visit the child expression. After this line of code, the child
@@ -349,10 +503,19 @@ public:
     // And now we return the LatticeElemMap. We didn't modify it, we didn't need to.
     return in;
   }
-
   LatticeElemMap* visitIdent(Ident *p, LatticeElemMap *in)
   {
     in = visit_children_of(p, in);
+    LatticeElem &e = p->m_symname->m_attribute.m_lattice_elem;
+    if (e == TOP)
+      p->m_attribute.m_lattice_elem = TOP;
+    else
+      p->m_attribute.m_lattice_elem = e.value;
+
+    Symbol *s = m_st -> lookup(p -> m_symname -> spelling());
+
+    s
+
     return in;
   }
 
