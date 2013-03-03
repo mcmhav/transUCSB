@@ -1,0 +1,17 @@
+function bool Main() {
+    var bool b;
+    var bool c;
+    var int a;
+    var int d;
+
+    if (b) {
+        d = 5;
+    } else {
+        d = 7;
+    }
+
+    a = -(d + 5);
+
+
+    return b;
+}

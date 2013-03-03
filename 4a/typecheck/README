@@ -1,0 +1,27 @@
+
+
+You NEED to perform the following checks:
+
+DONE - Undefined Variables:
+All variables must be defined in the current or higher scope before they are used.
+
+DONE - Undefined functions:
+All functions must be defined in the current or higher scope before they are used (before they can be called).
+
+DONE - Undefined arrays:
+All arrays must be defined in the current or higher scope before they are used (before they can be indexed).
+
+DONE - Incompatible assignment type error:
+The left and right hand side types must match for each assignment or function call, be it assigning to an array element or a variable. The type of intarray elements is integer.
+
+DONE - If statement premise type error:
+The premise of an if statement must be of type boolean.
+
+DONE - While loop requirement type error:
+The premise of while statement must be of type boolean.
+
+DONE - Expression type error:
+The types of expressions must match. The rules for expressions are the following: For arithmetic operations (+, -, *, /), both operands must be integer, and the resulting type is integer. For logic operations (&&, ||), both operands must be boolean, and the resulting type is boolean. For the following comparison operations (<, <=, >, >=), the operands must be integer, and the result is boolean. For (in)equality operators (==, !=), the operands can be both integer or both boolean. The result is boolean in each case. The unary minus (-) can only be applied to integer, and the result is integer. The absolute value operation can be applied only to integer expressions and the result is of type integer. The not operation (!) can only be applied to boolean expressions, and the result is boolean. When indexing an array, the return type is integer.
+
+DONE - Intarray index type error:
+Intarrays can only be indexed by an expression that evaluates to an integer. 
