@@ -1,6 +1,7 @@
 function bool Main() {
     var bool b, c;
     var int a, d;
+    var intarray[100] arr;
 
     if (b) {
         d = 5;
@@ -14,5 +15,9 @@ function bool Main() {
 
     b = false;
 
+    arr[1] = d;
+
+    d = arr[1] + a;
+    
     return b;
 }

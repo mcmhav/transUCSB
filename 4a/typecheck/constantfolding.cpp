@@ -145,12 +145,23 @@ public:
   {
     in = visit_children_of(p, in);
 
-    list<SymName_ptr>::iterator symname_iter;
-    forall(symname_iter, p -> m_symname_list) {
-      LatticeElem &e1 = (*symname_iter) -> m_attribute.m_lattice_elem;
+    // if(p -> m_type -> m_attribute.m_basetype == bt_intarray) {
+    //   int sz = p -> m_type -> m_primitive;
+    //   list<SymName_ptr>::iterator symname_iter;
+    //   forall(symname_iter, p -> m_symname_list) {
+    //     LatticeElem &e1 = (*symname_iter) -> m_attribute.m_lattice_elem;
 
-      (*in)[(*symname_iter)->spelling()] = TOP;
-    }
+    //     (*in)[(*symname_iter)->spelling()] = TOP;
+    //   }
+
+    // } else {
+      list<SymName_ptr>::iterator symname_iter;
+      forall(symname_iter, p -> m_symname_list) {
+        LatticeElem &e1 = (*symname_iter) -> m_attribute.m_lattice_elem;
+
+        (*in)[(*symname_iter)->spelling()] = TOP;
+      }
+    // }
 
     return in;
   }
@@ -164,7 +175,7 @@ public:
   LatticeElemMap* visitAssignment(Assignment *p, LatticeElemMap *in)
   {
     in = visit_children_of(p, in);
-    
+
     LatticeElem &ex = p->m_expr->m_attribute.m_lattice_elem;
     if (ex == TOP){
       (*in)[p->m_symname->spelling()] = TOP;
@@ -178,6 +189,9 @@ public:
   LatticeElemMap* visitArrayAssignment(ArrayAssignment *p, LatticeElemMap *in)
   {
     in = visit_children_of(p, in);
+
+    (*in)[p->m_symname->spelling()] = TOP;
+
     return in;
   }
 
@@ -196,6 +210,9 @@ public:
   LatticeElemMap* visitArrayCall(ArrayCall *p, LatticeElemMap *in)
   {
     in = visit_children_of(p, in);
+
+    p->m_attribute.m_lattice_elem = TOP;
+
     return in;
   }
 
@@ -213,15 +230,9 @@ public:
   {
     in = visit(p->m_expr, in);
 
-    //LatticeElemMap* clone1 = new LatticeElemMap(*in);
-
     in = visit(p->m_nested_block_1, in);
-    
     LatticeElemMap* clone2 = new LatticeElemMap(*in);
-
     clone2 = visit(p->m_nested_block_2, clone2);
-
-    //join_lattice_elem_maps(in, clone1);
     join_lattice_elem_maps(in, clone2);
 
     return in;
