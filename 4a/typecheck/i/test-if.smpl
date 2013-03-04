@@ -1,3 +1,12 @@
+function int foo(int i, int j, int k)
+{
+	function bool fee(int l, bool m, int n)
+	{
+		return true;
+	}
+	return 0;
+}
+
 function int Main() {
 	var int a, b;
 	
@@ -16,3 +25,4 @@ function int Main() {
 	}
 	return a + b;
 }
+

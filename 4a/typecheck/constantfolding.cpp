@@ -118,6 +118,14 @@ public:
   LatticeElemMap* visitFunction_block(Function_block *p, LatticeElemMap *in)
   {
     in = visit_children_of(p, in);
+
+    // list<Decl_ptr>::iterator decl_iter;
+    // forall(decl_iter, p -> m_decl_list) {
+    //   list<SymName_ptr>::iterator symname_iter;
+    //   forall(symname_iter, (*decl_iter) -> m_symname_list) {
+    //     (*in)[(*symname_iter)->spelling()] = TOP;
+    //   }
+    // }
     return in;
   }
 
@@ -137,18 +145,8 @@ public:
   {
     in = visit_children_of(p, in);
 
-//m_symname_list
-
     list<SymName_ptr>::iterator symname_iter;
-    char* name;
-    
-    Basetype type = p -> m_type -> m_attribute.m_basetype;
-
     forall(symname_iter, p -> m_symname_list) {
-      Symbol *s = new Symbol();
-      s -> m_basetype = type;
-      name = strdup((*symname_iter) -> spelling());
-
       // LatticeElem &e1 = p -> m_expr_1 -> m_attribute.m_lattice_elem;
       LatticeElem &e1 = (*symname_iter) -> m_attribute.m_lattice_elem;
 
@@ -241,6 +239,12 @@ public:
   LatticeElemMap* visitCall(Call *p, LatticeElemMap *in)
   {
     in = visit_children_of(p, in);
+
+    LatticeElemMap::iterator iter;
+    for (iter = in->begin(); iter != in->end(); iter++) {
+      (*in)[iter->first] = TOP;
+    }
+
     return in;
   }
 
@@ -252,13 +256,35 @@ public:
 
   LatticeElemMap* visitIfNoElse(IfNoElse *p, LatticeElemMap *in)
   {
-    in = visit_children_of(p, in);
+    in = visit(p->m_expr, in);
+
+
+    LatticeElemMap* clone = new LatticeElemMap(*in);
+
+    clone = visit(p->m_nested_block, clone);
+    
+    join_lattice_elem_maps(in, clone);
+
+
     return in;
+
   }
 
   LatticeElemMap* visitIfWithElse(IfWithElse *p, LatticeElemMap *in)
   {
-    in = visit_children_of(p, in);
+    in = visit(p->m_expr, in);
+
+    //LatticeElemMap* clone1 = new LatticeElemMap(*in);
+
+    in = visit(p->m_nested_block_1, in);
+    
+    LatticeElemMap* clone2 = new LatticeElemMap(*in);
+
+    clone2 = visit(p->m_nested_block_2, clone2);
+
+    //join_lattice_elem_maps(in, clone1);
+    join_lattice_elem_maps(in, clone2);
+
     return in;
   }
 
@@ -503,7 +529,7 @@ public:
     if (e == TOP)
       p->m_attribute.m_lattice_elem = TOP;
     else
-      p->m_attribute.m_lattice_elem = abs(e.value*e.value);
+      p->m_attribute.m_lattice_elem = abs(e.value);
 
     return in;
   }
