@@ -1,8 +1,6 @@
 function bool Main() {
-    var bool b;
-    var bool c;
-    var int a;
-    var int d;
+    var bool b, c;
+    var int a, d;
 
     if (b) {
         d = 5;

@@ -147,15 +147,9 @@ public:
 
     list<SymName_ptr>::iterator symname_iter;
     forall(symname_iter, p -> m_symname_list) {
-      // LatticeElem &e1 = p -> m_expr_1 -> m_attribute.m_lattice_elem;
       LatticeElem &e1 = (*symname_iter) -> m_attribute.m_lattice_elem;
 
       (*in)[(*symname_iter)->spelling()] = TOP;
-
-      // cout << e1.value;
-      //p -> m_symname.m_lattice_elem = name;
-
-      // LatticeElem &e = p -> m_symname -> m_attribute.m_lattice_elem;
     }
 
     return in;
@@ -170,63 +164,14 @@ public:
   LatticeElemMap* visitAssignment(Assignment *p, LatticeElemMap *in)
   {
     in = visit_children_of(p, in);
-    // LatticeElem &sy = p->m_symname->m_attribute.m_lattice_elem;
-    LatticeElem &ex = p->m_expr->m_attribute.m_lattice_elem;
-
-
-
-    // list<SymName_ptr>::iterator symname_iter;
-    // char* name;
     
-    // Basetype type = p -> m_type -> m_attribute.m_basetype;
-
-    // forall(symname_iter, p -> m_symname_list) {
-    //   Symbol *s = new Symbol();
-    //   s -> m_basetype = type;
-    //   name = strdup((*symname_iter) -> spelling());
-
-    //   // LatticeElem &e1 = p -> m_expr_1 -> m_attribute.m_lattice_elem;
-    //   LatticeElem &e1 = (*symname_iter) -> m_attribute.m_lattice_elem;
-
-
-    //   cout << e1.value;
-    //   //p -> m_symname.m_lattice_elem = name;
-
-    //   // LatticeElem &e = p -> m_symname -> m_attribute.m_lattice_elem;
-    // }
-
-    // in = visit_children_of(p, in);
-
-    // LatticeElem &e1 = p -> m_expr_1 -> m_attribute.m_lattice_elem;
-    // LatticeElem &e2 = p -> m_expr_2 -> m_attribute.m_lattice_elem;
-
-    // if (e1 == TOP || e2 == TOP){
-    //   if(e1.value == 0 || e2.value == 0){
-    //     p->m_attribute.m_lattice_elem = 0;
-    //     return in;
-    //   }
-    //   p->m_attribute.m_lattice_elem = TOP;
-    // }
-    // else
-    //   p->m_attribute.m_lattice_elem = (e1.value*e2.value);
-
-
+    LatticeElem &ex = p->m_expr->m_attribute.m_lattice_elem;
     if (ex == TOP){
       (*in)[p->m_symname->spelling()] = TOP;
     } else {
       (*in)[p->m_symname->spelling()] = ex.value;
     }
 
-
-
-    // cout << p -> m_symname -> spelling();
-    // cout << e.value;
-    // cout << sy.value;
-    LatticeElem &le = (*in)[p->m_symname->spelling()];
-
-    // cout << le.value;
-
-    // print_lattice_map(in);
     return in;
   }
 
@@ -258,18 +203,12 @@ public:
   {
     in = visit(p->m_expr, in);
 
-
     LatticeElemMap* clone = new LatticeElemMap(*in);
-
     clone = visit(p->m_nested_block, clone);
-    
     join_lattice_elem_maps(in, clone);
 
-
     return in;
-
   }
-
   LatticeElemMap* visitIfWithElse(IfWithElse *p, LatticeElemMap *in)
   {
     in = visit(p->m_expr, in);
@@ -287,7 +226,6 @@ public:
 
     return in;
   }
-
   LatticeElemMap* visitWhileLoop(WhileLoop *p, LatticeElemMap *in)
   {
     // NOTE: this here is implemented for you. Use it as a template
@@ -595,9 +533,14 @@ public:
       }
       p->m_attribute.m_lattice_elem = TOP;
     }
-    else
-      p->m_attribute.m_lattice_elem = (e1.value/e2.value);
-
+    else {
+      if (e2.value == 0) {
+        p->m_attribute.m_lattice_elem = TOP;
+        return in;
+      } else {
+        p->m_attribute.m_lattice_elem = (e1.value/e2.value);
+      }
+    }
     return in;
   }
   LatticeElemMap* visitNot(Not *p, LatticeElemMap *in)
@@ -622,29 +565,13 @@ public:
   LatticeElemMap* visitIdent(Ident *p, LatticeElemMap *in)
   {
     in = visit_children_of(p, in);
-    // LatticeElem &e = p->m_symname->m_attribute.m_lattice_elem;
-
-    // // cout << e.value;
-    // // cout << p -> m_symname -> spelling();
-
-    // if (e == TOP)
-    //   p->m_attribute.m_lattice_elem = TOP;
-    // else
-    //   p->m_attribute.m_lattice_elem = e.value;
-
-    // Symbol *s = m_st -> lookup(p -> m_symname -> spelling());
-    // p->m_attribute.m_lattice_elem = TOP;
-
     LatticeElem &le = (*in)[p->m_symname->spelling()];
 
     if(le == TOP){
-      // cout << "TOP";
       p->m_attribute.m_lattice_elem = TOP;
     } else {
-      // cout << le.value;
       p->m_attribute.m_lattice_elem = le.value;
     }
-    // cout << p->m_symname->spelling();
 
     return in;
   }
