@@ -565,10 +565,10 @@ public:
 
     // If it's TOP, then we cannot know anything about this expression; it should be TOP as well
     if (e == TOP)
-	    p->m_attribute.m_lattice_elem = TOP;
+      p->m_attribute.m_lattice_elem = TOP;
     else
-	    // Otherwise, it contains the boolean opposite of the child's LatticeElem
-	    p->m_attribute.m_lattice_elem = !(e.value);
+      // Otherwise, it contains the boolean opposite of the child's LatticeElem
+      p->m_attribute.m_lattice_elem = !(e.value);
 
     // And now we return the LatticeElemMap. We didn't modify it, we didn't need to.
     return in;
@@ -623,8 +623,8 @@ public:
 
   ConstantFolding(FILE* errorfile, SymTab* st) 
   {
-	m_errorfile = errorfile;
-	m_st = st; 
+  m_errorfile = errorfile;
+  m_st = st; 
   }
 
   ~ConstantFolding() {}
