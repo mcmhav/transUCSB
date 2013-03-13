@@ -128,13 +128,11 @@ public:
   void visitProgram(Program * p)
   {
     set_text_mode();
-    fprintf(m_outputfile, ".globl\tMain\n");
+    fprintf(m_outputfile, ".globl\tMain\n\n");
     p->visit_children(this);
   }
   void visitFunc(Func * p)
   {
-    int skip_label = new_label();
-    fprintf(m_outputfile, "\tjmp\tskip_nested_procedure%d\n", skip_label);
     fprintf(m_outputfile, "%s:\n", p->m_symname->spelling());
     fprintf(m_outputfile, "\tpushl\t%%ebp\n");
     fprintf(m_outputfile, "\tmovl\t%%esp, %%ebp\n");
@@ -155,7 +153,6 @@ public:
     fprintf(m_outputfile, "\tpopl\t%%ebx\n");
     fprintf(m_outputfile, "\tmovl\t%%ebx, %%ebp\n");
     fprintf(m_outputfile, "\tret\n");
-    fprintf(m_outputfile, "skip_nested_procedure%d:\n", skip_label);
   }
   void visitFunction_block(Function_block * p)
   {
@@ -261,37 +258,42 @@ public:
   void visitIfNoElse(IfNoElse * p)
   {
     p->m_expr->accept(this);
-    fprintf(m_outputfile, "##testikus##\n");
     int label = new_label();
     fprintf(m_outputfile, "\tpopl\t%%ecx\n");
-    fprintf(m_outputfile, "\tjecxz\tDone_%d\n", label);
+    fprintf(m_outputfile, "\tmovl $0, %%ebx\n");
+    fprintf(m_outputfile, "\tcmp %%eax, %%ebx\n");
+    fprintf(m_outputfile, "\tje D%d\n", label);
     p->m_nested_block->accept(this);
-    fprintf(m_outputfile, "Done_%d:\n", label);
+    fprintf(m_outputfile, "D%d:", label);
   }
   void visitIfWithElse(IfWithElse * p)
   {
     p->m_expr->accept(this);
-    int label_number_else = new_label();
-    int label_number_done = new_label();
+    int label_else = new_label();
+    int label_done = new_label();
     fprintf(m_outputfile, "\tpopl\t%%ecx\n");
-    fprintf(m_outputfile, "\tjecxz\tElse_%d\n", label_number_else);
+    fprintf(m_outputfile, "\tmovl $0, %%ebx\n");
+    fprintf(m_outputfile, "\tcmp %%eax, %%ebx\n");
+    fprintf(m_outputfile, "\tje E%d\n", label_else);
     p->m_nested_block_1->accept(this);
-    fprintf(m_outputfile, "\tjmp\tDone_%d\n", label_number_done);
-    fprintf(m_outputfile, "Else_%d:\n", label_number_else);
+    fprintf(m_outputfile, "\tjmp\tD%d\n", label_done);
+    fprintf(m_outputfile, "E%d:", label_else);
     p->m_nested_block_2->accept(this);
-    fprintf(m_outputfile, "Done_%d:\n", label_number_done);
+    fprintf(m_outputfile, "D%d:", label_done);
   }
   void visitWhileLoop(WhileLoop * p)
   {
-    int label_number_loop = new_label();
-    int label_number_done = new_label();
-    fprintf(m_outputfile, "Loop_%d:\n", label_number_loop);
+    int label_loop = new_label();
+    int label_done = new_label();
+    fprintf(m_outputfile, "L%d:", label_loop);
     p->m_expr->accept(this);
     fprintf(m_outputfile, "\tpopl\t%%ecx\n");
-    fprintf(m_outputfile, "\tjecxz\tDone_%d\n", label_number_done);
+    fprintf(m_outputfile, "\tmovl $0, %%ebx\n");
+    fprintf(m_outputfile, "\tcmp %%eax, %%ebx\n");
+    fprintf(m_outputfile, "\tje D%d\n", label_done);
     p->m_nested_block->accept(this);
-    fprintf(m_outputfile, "\tjmp\tLoop_%d\n", label_number_loop);    
-    fprintf(m_outputfile, "Done_%d:\n", label_number_done);
+    fprintf(m_outputfile, "\tjmp\tL%d\n", label_loop);    
+    fprintf(m_outputfile, "D%d:", label_done);
   }
 
   // variable declarations (no code generation needed)
@@ -320,109 +322,109 @@ public:
   void visitCompare(Compare * p)
   {
     p->visit_children(this);
-    int label_number_true = new_label();
-    int label_number_done = new_label();
+    int label_true = new_label();
+    int label_done = new_label();
     fprintf(m_outputfile, "\tpopl\t%%eax\n");
     fprintf(m_outputfile, "\tpopl\t%%ecx\n");
     fprintf(m_outputfile, "\tsubl\t%%eax, %%ecx\n");
-    fprintf(m_outputfile, "\tjecxz\tTrue_%d\n", label_number_true);
+    fprintf(m_outputfile, "\tjecxz\tT%d\n", label_true);
     fprintf(m_outputfile, "\tmovl\t$0, %%eax\n");
-    fprintf(m_outputfile, "\tjmp\tDone_%d\n", label_number_done);
-    fprintf(m_outputfile, "True_%d:\n", label_number_true);
+    fprintf(m_outputfile, "\tjmp\tD%d\n", label_done);
+    fprintf(m_outputfile, "T%d:", label_true);
     fprintf(m_outputfile, "\tmovl\t$1, %%eax\n");
-    fprintf(m_outputfile, "Done_%d:\n", label_number_done);
+    fprintf(m_outputfile, "D%d:", label_done);
     fprintf(m_outputfile, "\tpushl\t%%eax\n");
   }
   void visitNoteq(Noteq * p)
   {
     p->visit_children(this);
-    int label_number_false = new_label();
-    int label_number_done = new_label();
+    int label_false = new_label();
+    int label_done = new_label();
     fprintf(m_outputfile, "\tpopl\t%%eax\n");
     fprintf(m_outputfile, "\tpopl\t%%ecx\n");
     fprintf(m_outputfile, "\tsubl\t%%eax, %%ecx\n");
-    fprintf(m_outputfile, "\tjecxz\tFalse_%d\n", label_number_false);
+    fprintf(m_outputfile, "\tjecxz\tF%d\n", label_false);
     fprintf(m_outputfile, "\tmovl\t$1, %%eax\n");
-    fprintf(m_outputfile, "\tjmp\tDone_%d\n", label_number_done);
-    fprintf(m_outputfile, "False_%d:\n", label_number_false);
+    fprintf(m_outputfile, "\tjmp\tD%d\n", label_done);
+    fprintf(m_outputfile, "F%d:", label_false);
     fprintf(m_outputfile, "\tmovl\t$0, %%eax\n");
-    fprintf(m_outputfile, "Done_%d:\n", label_number_done);
+    fprintf(m_outputfile, "D%d:", label_done);
     fprintf(m_outputfile, "\tpushl\t%%eax\n");
   }
   void visitGt(Gt * p)
   {
     p->visit_children(this);
-    int label_number_true = new_label();
-    int label_number_false = new_label();
-    int label_number_done = new_label();
+    int label_true = new_label();
+    int label_false = new_label();
+    int label_done = new_label();
     fprintf(m_outputfile, "\tpopl\t%%eax\n");
     fprintf(m_outputfile, "\tpopl\t%%ecx\n");
     fprintf(m_outputfile, "\tsubl\t%%eax, %%ecx\n");
-    fprintf(m_outputfile, "\tjecxz\tFalse_%d\n", label_number_false);
+    fprintf(m_outputfile, "\tjecxz\tF%d\n", label_false);
     fprintf(m_outputfile, "\tshr\t$31, %%ecx\n");
-    fprintf(m_outputfile, "\tjecxz\tTrue_%d\n", label_number_true);
-    fprintf(m_outputfile, "False_%d:\n", label_number_false);
+    fprintf(m_outputfile, "\tjecxz\tT%d\n", label_true);
+    fprintf(m_outputfile, "F%d:", label_false);
     fprintf(m_outputfile, "\tmovl\t$0, %%eax\n");
-    fprintf(m_outputfile, "\tjmp\tDone_%d\n", label_number_done);
-    fprintf(m_outputfile, "True_%d:\n", label_number_true);
+    fprintf(m_outputfile, "\tjmp\tD%d\n", label_done);
+    fprintf(m_outputfile, "T%d:", label_true);
     fprintf(m_outputfile, "\tmovl\t$1, %%eax\n");
-    fprintf(m_outputfile, "Done_%d:\n", label_number_done);
+    fprintf(m_outputfile, "D%d:", label_done);
     fprintf(m_outputfile, "\tpushl\t%%eax\n");
   }
   void visitGteq(Gteq * p)
   {
     p->visit_children(this);
-    int label_number_true = new_label();
-    int label_number_done = new_label();
+    int label_true = new_label();
+    int label_done = new_label();
     fprintf(m_outputfile, "\tpopl\t%%eax\n");
     fprintf(m_outputfile, "\tpopl\t%%ecx\n");
     fprintf(m_outputfile, "\tsubl\t%%eax, %%ecx\n");
-    fprintf(m_outputfile, "\tjecxz\tTrue_%d\n", label_number_true);
+    fprintf(m_outputfile, "\tjecxz\tT%d\n", label_true);
     fprintf(m_outputfile, "\tshr\t$31, %%ecx\n");
-    fprintf(m_outputfile, "\tjecxz\tTrue_%d\n", label_number_true);
+    fprintf(m_outputfile, "\tjecxz\tT%d\n", label_true);
     fprintf(m_outputfile, "\tmovl\t$0, %%eax\n");
-    fprintf(m_outputfile, "\tjmp\tDone_%d\n", label_number_done);
-    fprintf(m_outputfile, "True_%d:\n", label_number_true);
+    fprintf(m_outputfile, "\tjmp\tD%d\n", label_done);
+    fprintf(m_outputfile, "T%d:", label_true);
     fprintf(m_outputfile, "\tmovl\t$1, %%eax\n");
-    fprintf(m_outputfile, "Done_%d:\n", label_number_done);
+    fprintf(m_outputfile, "D%d:", label_done);
     fprintf(m_outputfile, "\tpushl\t%%eax\n");
   }
   void visitLt(Lt * p)
   {
     p->visit_children(this);
-    int label_number_true = new_label();
-    int label_number_false = new_label();
-    int label_number_done = new_label();
+    int label_true = new_label();
+    int label_false = new_label();
+    int label_done = new_label();
     fprintf(m_outputfile, "\tpopl\t%%ecx\n");
     fprintf(m_outputfile, "\tpopl\t%%eax\n");
     fprintf(m_outputfile, "\tsubl\t%%eax, %%ecx\n");
-    fprintf(m_outputfile, "\tjecxz\tFalse_%d\n", label_number_false);
+    fprintf(m_outputfile, "\tjecxz\tF%d\n", label_false);
     fprintf(m_outputfile, "\tshr\t$31, %%ecx\n");
-    fprintf(m_outputfile, "\tjecxz\tTrue_%d\n", label_number_true);
-    fprintf(m_outputfile, "False_%d:\n", label_number_false);
+    fprintf(m_outputfile, "\tjecxz\tT%d\n", label_true);
+    fprintf(m_outputfile, "F%d:", label_false);
     fprintf(m_outputfile, "\tmovl\t$0, %%eax\n");
-    fprintf(m_outputfile, "\tjmp\tDone_%d\n", label_number_done);
-    fprintf(m_outputfile, "True_%d:\n", label_number_true);
+    fprintf(m_outputfile, "\tjmp\tD%d\n", label_done);
+    fprintf(m_outputfile, "T%d:", label_true);
     fprintf(m_outputfile, "\tmovl\t$1, %%eax\n");
-    fprintf(m_outputfile, "Done_%d:\n", label_number_done);
+    fprintf(m_outputfile, "D%d:", label_done);
     fprintf(m_outputfile, "\tpushl\t%%eax\n");
   }
   void visitLteq(Lteq * p)
   {
     p->visit_children(this);
-    int label_number_true = new_label();
-    int label_number_done = new_label();
+    int label_true = new_label();
+    int label_done = new_label();
     fprintf(m_outputfile, "\tpopl\t%%ecx\n");
     fprintf(m_outputfile, "\tpopl\t%%eax\n");
     fprintf(m_outputfile, "\tsubl\t%%eax, %%ecx\n");
-    fprintf(m_outputfile, "\tjecxz\tTrue_%d\n", label_number_true);
+    fprintf(m_outputfile, "\tjecxz\tT%d\n", label_true);
     fprintf(m_outputfile, "\tshr\t$31, %%ecx\n");
-    fprintf(m_outputfile, "\tjecxz\tTrue_%d\n", label_number_true);
+    fprintf(m_outputfile, "\tjecxz\tT%d\n", label_true);
     fprintf(m_outputfile, "\tmovl\t$0, %%eax\n");
-    fprintf(m_outputfile, "\tjmp\tDone_%d\n", label_number_done);
-    fprintf(m_outputfile, "True_%d:\n", label_number_true);
+    fprintf(m_outputfile, "\tjmp\tD%d\n", label_done);
+    fprintf(m_outputfile, "T%d:", label_true);
     fprintf(m_outputfile, "\tmovl\t$1, %%eax\n");
-    fprintf(m_outputfile, "Done_%d:\n", label_number_done);
+    fprintf(m_outputfile, "D%d:", label_done);
     fprintf(m_outputfile, "\tpushl\t%%eax\n");
   }
 
@@ -482,15 +484,15 @@ public:
   void visitNot(Not * p)
   {
     p->visit_children(this);
-    int label_number_set_to_one = new_label();
-    int label_number_done = new_label();
+    int label_set_to_one = new_label();
+    int label_done = new_label();
     fprintf(m_outputfile, "\tpopl\t%%ecx\n");
-    fprintf(m_outputfile, "\tjecxz\tSet_To_One_%d\n", label_number_set_to_one);
+    fprintf(m_outputfile, "\tjecxz\tO%d\n", label_set_to_one);
     fprintf(m_outputfile, "\tmovl\t$0, %%eax\n");
-    fprintf(m_outputfile, "\tjmp\tDone_%d\n", label_number_done);
-    fprintf(m_outputfile, "Set_To_One_%d:\n", label_number_set_to_one);
+    fprintf(m_outputfile, "\tjmp\tD%d\n", label_done);
+    fprintf(m_outputfile, "O%d:", label_set_to_one);
     fprintf(m_outputfile, "\tmovl\t$1, %%eax\n");
-    fprintf(m_outputfile, "Done_%d:\n", label_number_done);
+    fprintf(m_outputfile, "D%d:", label_done);
     fprintf(m_outputfile, "\tpushl\t%%eax\n");
   }
   void visitUminus(Uminus * p)
@@ -505,11 +507,11 @@ public:
     p->visit_children(this);
     int label = new_label();
     fprintf(m_outputfile, "\tpopl\t%%eax\n");
-    fprintf(m_outputfile, "\tmovl\t%%eax, %%ecx\n");
-    fprintf(m_outputfile, "\tshr\t$31, %%ecx\n"); //if %eax was negative, then after the shift, %ecx should be 1, otherwise it will be 0.
-    fprintf(m_outputfile, "\tjecxz\tSkip_Negation_%d\n", label);
-    fprintf(m_outputfile, "\timull\t$-1, %%eax\n");
-    fprintf(m_outputfile, "Skip_Negation_%d:\n", label);
+    // fprintf(m_outputfile, "\tmovl\t%%eax, %%ecx\n");
+    // fprintf(m_outputfile, "\tshr\t$31, %%ecx\n"); //if %eax was negative, then after the shift, %ecx should be 1, otherwise it will be 0.
+    // fprintf(m_outputfile, "\tjecxz\tS%d\n", label);
+    // fprintf(m_outputfile, "\timull\t$-1, %%eax\n");
+    fprintf(m_outputfile, "\tfabs\t %%eax\n");
     fprintf(m_outputfile, "\tpushl\t%%eax\n");
   }
 
