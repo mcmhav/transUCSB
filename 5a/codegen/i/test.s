@@ -5,7 +5,7 @@
 Main:
 	pushl	%ebp
 	movl	%esp, %ebp
-	subl	$12, %esp
+	subl	$16, %esp
 	pushl	$0
 	popl	%eax
 	movl	%eax, -12(%ebp)
@@ -24,6 +24,9 @@ D1:	pushl	%eax
 	pushl	%eax
 	popl	%eax
 	movl	%eax, -8(%ebp)
+	pushl	$3
+	popl	%eax
+	movl	%eax, -4(%ebp)
 	pushl	-4(%ebp)
 	pushl	$5
 	popl	%eax
@@ -43,21 +46,7 @@ D4:	pushl	%eax
 	pushl	$10
 	popl	%eax
 	movl	%eax, -4(%ebp)
-D5:	pushl	$1
-	pushl	$10
-	popl	%eax
-	popl	%ebx
-	subl	%eax, %ebx
-	pushl	%ebx
-	pushl	$20
-	popl	%eax
-	popl	%ebx
-	subl	%eax, %ebx
-	pushl	%ebx
-	abs
-	popl	%eax
-	movl	%eax, -4(%ebp)
-	pushl	-4(%ebp)
+D5:	pushl	-4(%ebp)
 	popl	%eax
 	movl	%ebp, %esp
 	popl	%ebx

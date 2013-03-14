@@ -503,15 +503,15 @@ public:
   void visitMagnitude(Magnitude * p)
   {
     p->visit_children(this);
-    int label = new_label();
-    // fprintf(m_outputfile, "\tpopl\t%%eax\n");
-    // fprintf(m_outputfile, "\tmovl\t%%eax, %%ecx\n");
-    // fprintf(m_outputfile, "\tshr\t$31, %%ecx\n"); //if %eax was negative, then after the shift, %ecx should be 1, otherwise it will be 0.
-    // fprintf(m_outputfile, "\tjecxz\tS%d\n", label);
-    // fprintf(m_outputfile, "\timull\t$-1, %%eax\n");
-    // fprintf(m_outputfile, "S%d:", label);
-    // fprintf(m_outputfile, "\tpushl\t%%eax\n");
-    fprintf(m_outputfile, "\tabs\n");
+    int label = new_label();    // abs(x) = (x XOR y) - y where y = x >>> 31
+    fprintf(m_outputfile, "\tpopl\t%%eax\n");
+    fprintf(m_outputfile, "\tmovl\t%%eax, %%ebx\n");
+    fprintf(m_outputfile, "\tsarl\t$31, %%ebx\n");
+    fprintf(m_outputfile, "\tmovl\t%%ebx, %%ecx\n");
+    fprintf(m_outputfile, "\txorl\t%%eax, %%ecx\n");
+    fprintf(m_outputfile, "\tmovl\t%%ecx, %%eax\n");
+    fprintf(m_outputfile, "\tsubl\t%%ebx, %%eax\n");
+    fprintf(m_outputfile, "\tpushl\t%%eax\n");
   }
 
   // variable and constant access
