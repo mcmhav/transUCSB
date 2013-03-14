@@ -59,3 +59,9 @@ push:
 	rm -f $(RMFILES)
 	git add -u && git commit -m "autopush" && git push
 	
+run:
+	clear && make && ./simple < i/test.test > i/test.s
+	gcc -m32 -c -o i/simple.o i/test.s
+	gcc -m32 -c -o i/start.o i/start.c
+	gcc -m32 -o i/start i/start.o i/simple.o
+	./i/start
