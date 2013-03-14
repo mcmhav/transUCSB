@@ -143,14 +143,14 @@ public:
     fprintf(m_outputfile, "\tpushl\t%%ebp\n");
     fprintf(m_outputfile, "\tmovl\t%%esp, %%ebp\n");
     int num_args = 0;
-    list<Param_ptr>::iterator m_parm_iter;
 
+    list<Param_ptr>::iterator m_parm_iter;
     forall(m_parm_iter, p->m_param_list) {
-      num_args += ((Decl *)(*m_parm_iter)) -> m_symname_list -> size();
+      num_args ++;
     }
 
     for (int i = 1; i <= num_args; i++) {
-      int offset = 4 + (i*4);
+      int offset = wordsize + (i*wordsize);
       fprintf(m_outputfile, "\tpushl\t%d(%%ebp)\n", offset);      
     }
 
@@ -162,25 +162,25 @@ public:
   void visitFunction_block(Function_block * p)
   {
     int num_vars = 0;
+    
     list<Decl_ptr>::iterator m_decl_list_iter;
-
-    forall(m_decl_list_iter,p->m_decl_list) {
+    forall(m_decl_list_iter, p->m_decl_list) {
       if (((Decl *)(*m_decl_list_iter))->m_attribute.m_basetype != bt_intarray)
         num_vars += ((Decl *)(*m_decl_list_iter))->m_symname_list->size();
       else
         num_vars += ((Decl *)(*m_decl_list_iter))->m_symname_list->size() * ((TIntArray *)((Decl *)(*m_decl_list_iter))->m_type)->m_primitive->m_data;
     }
-    
-    fprintf(m_outputfile, "\tsubl\t$%d, %%esp\n", num_vars*4); 
 
-    list<Func_ptr>::iterator m_proc_list_iter;
-    forall(m_proc_list_iter, p->m_func_list) {
-        (*m_proc_list_iter)->accept( this );
+    fprintf(m_outputfile, "\tsubl\t$%d, %%esp\n", num_vars*wordsize); 
+
+    list<Func_ptr>::iterator m_fun_list_iter;
+    forall(m_fun_list_iter, p->m_func_list) {
+        (*m_fun_list_iter)->accept(this);
     }
 
     list<Stat_ptr>::iterator m_stat_list_iter;
     forall(m_stat_list_iter, p->m_stat_list) {
-      (*m_stat_list_iter)->accept( this );
+      (*m_stat_list_iter)->accept(this);
     }
     
     p->m_return->accept(this);
@@ -195,7 +195,7 @@ public:
     p->visit_children(this);
     fprintf(m_outputfile, "\tpopl\t%%eax\n");
     Symbol *s = m_st->lookup(p->m_attribute.m_scope, p->m_symname->spelling());
-    fprintf(m_outputfile, "\tmovl\t%%eax, %d(%%ebp)\n", -(4+s->get_offset()) ); 
+    fprintf(m_outputfile, "\tmovl\t%%eax, %d(%%ebp)\n", -(wordsize+s->get_offset()) ); 
   }
   void visitArrayAssignment(ArrayAssignment * p)
   {
@@ -205,7 +205,7 @@ public:
     Symbol *s = m_st->lookup(p->m_attribute.m_scope, p->m_symname->spelling());
     fprintf(m_outputfile, "\timull\t$4, %%ebx\n");
     fprintf(m_outputfile, "\taddl\t$%d, %%ebx\n", s->get_offset());
-    fprintf(m_outputfile, "\taddl\t$%d, %%ebx\n", 4);
+    fprintf(m_outputfile, "\taddl\t$%d, %%ebx\n", wordsize);
     fprintf(m_outputfile, "\tneg\t%%ebx\n");
     fprintf(m_outputfile, "\taddl\t%%ebp, %%ebx\n");
     fprintf(m_outputfile, "\tmovl\t%%eax, (%%ebx)\n");
@@ -213,30 +213,34 @@ public:
   void visitCall(Call * p)
   {
     int num_arguments = 0;
+
     list<Expr_ptr>::reverse_iterator m_expr_list_iter;
     forallR(m_expr_list_iter, p->m_expr_list) {
       num_arguments++;
-      (*m_expr_list_iter)->accept( this );
+      (*m_expr_list_iter)->accept(this);
     }
+
     fprintf(m_outputfile, "\tcall\t%s\n", p->m_symname_2->spelling());
     Symbol *s = m_st->lookup(p->m_attribute.m_scope, p->m_symname_1->spelling());
-    fprintf(m_outputfile, "\tmovl\t%%eax, %d(%%ebx)\n", -(4+s->get_offset()) );  
+    fprintf(m_outputfile, "\tmovl\t%%eax, %d(%%ebx)\n", -(wordsize+s->get_offset()) );  
   }
   void visitArrayCall(ArrayCall *p)
   {
     int num_arguments = 0;
+
     list<Expr_ptr>::reverse_iterator m_expr_list_iter;
     forallR(m_expr_list_iter, p->m_expr_list_2) {
       num_arguments++;
-      (*m_expr_list_iter)->accept( this );
+      (*m_expr_list_iter)->accept(this);
     }
+
     fprintf(m_outputfile, "\tcall\t%s\n", p->m_symname_2->spelling());
     p->m_expr_1->accept(this);
     fprintf(m_outputfile, "\tpopl\t%%ebx\n");
     fprintf(m_outputfile, "\timull\t$4, %%ebx\n");
     Symbol *s = m_st->lookup(p->m_attribute.m_scope, p->m_symname_1->spelling());
     fprintf(m_outputfile, "\taddl\t$%d, %%ebx\n", s->get_offset());
-    fprintf(m_outputfile, "\taddl\t$%d, %%ebx\n", 4);
+    fprintf(m_outputfile, "\taddl\t$%d, %%ebx\n", wordsize);
     fprintf(m_outputfile, "\tneg\t%%ebx\n");
     fprintf(m_outputfile, "\taddl\t%%ebp, %%ebx\n");
     fprintf(m_outputfile, "\tmovl\t%%eax, (%%ebx)\n");
@@ -493,7 +497,7 @@ public:
   {
     p->visit_children(this);
     Symbol *s = m_st->lookup(p->m_attribute.m_scope, p->m_symname->spelling());
-    fprintf(m_outputfile, "\tpushl\t%d(%%ebp)\n", -(4+s->get_offset()));
+    fprintf(m_outputfile, "\tpushl\t%d(%%ebp)\n", -(wordsize+s->get_offset()));
   }
   void visitIntLit(IntLit * p)
   {
@@ -512,7 +516,7 @@ public:
     Symbol *s = m_st->lookup(p->m_attribute.m_scope, p->m_symname->spelling());
     fprintf(m_outputfile, "\timull\t$4, %%ebx\n");
     fprintf(m_outputfile, "\taddl\t$%d, %%ebx\n", s->get_offset());
-    fprintf(m_outputfile, "\taddl\t$%d, %%ebx\n", 4);
+    fprintf(m_outputfile, "\taddl\t$%d, %%ebx\n", wordsize);
     fprintf(m_outputfile, "\tneg\t%%ebx\n");
     fprintf(m_outputfile, "\taddl\t%%ebp, %%ebx\n");
     fprintf(m_outputfile, "\tpushl\t(%%ebx)\n");

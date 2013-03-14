@@ -1,11 +1,13 @@
-function int foo()
+function int foo(int a, int b)
 {
-    return 2;
+    return a + b;
 }
 
 function int Main()
 {
-    var int a;
-    a = foo();
+    var int a, b, c;
+    b = 2;
+    c = 4;
+    a = foo(1, 5);
     return a;
 }
