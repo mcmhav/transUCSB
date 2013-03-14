@@ -5,23 +5,23 @@
 Main:
 	pushl	%ebp
 	movl	%esp, %ebp
-	subl	$8, %esp
+	subl	$12, %esp
 	pushl	$0
 	popl	%eax
-	movl	%eax, -8(%ebp)
-	pushl	$2
-	popl	%eax
-	fabs	, %eax
-	pushl	%eax
-	popl	%eax
-	movl	%eax, -4(%ebp)
-	pushl	-8(%ebp)
+	movl	%eax, -12(%ebp)
+	pushl	-12(%ebp)
 	popl	%ecx
-	jecxz	O1
+	jecxz	O0
 	movl	$0, %eax
-	jmp	D2
-O1:	movl	$1, %eax
-D2:	pushl	%eax
+	jmp	D1
+O0:	movl	$1, %eax
+D1:	pushl	%eax
+	popl	%eax
+	movl	%eax, -12(%ebp)
+	pushl	$10
+	popl	%eax
+	imull	$-1, %eax
+	pushl	%eax
 	popl	%eax
 	movl	%eax, -8(%ebp)
 	pushl	-4(%ebp)
@@ -29,21 +29,35 @@ D2:	pushl	%eax
 	popl	%eax
 	popl	%ecx
 	subl	%eax, %ecx
-	jecxz	F4
+	jecxz	F3
 	shr	$31, %ecx
-	jecxz	T3
-F4:	movl	$0, %eax
-	jmp	D5
-T3:	movl	$1, %eax
-D5:	pushl	%eax
+	jecxz	T2
+F3:	movl	$0, %eax
+	jmp	D4
+T2:	movl	$1, %eax
+D4:	pushl	%eax
 	popl	%ecx
 	movl $0, %ebx
 	cmp %eax, %ebx
-	je D6
+	je D5
 	pushl	$10
 	popl	%eax
 	movl	%eax, -4(%ebp)
-D6:	pushl	-4(%ebp)
+D5:	pushl	$1
+	pushl	$10
+	popl	%eax
+	popl	%ebx
+	subl	%eax, %ebx
+	pushl	%ebx
+	pushl	$20
+	popl	%eax
+	popl	%ebx
+	subl	%eax, %ebx
+	pushl	%ebx
+	abs
+	popl	%eax
+	movl	%eax, -4(%ebp)
+	pushl	-4(%ebp)
 	popl	%eax
 	movl	%ebp, %esp
 	popl	%ebx

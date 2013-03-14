@@ -1,17 +1,18 @@
 function int Main()
 {
-    var int a;
+    var int a, c;
     var bool b;
     b = false;
 
-    a = |2|;
 
     b = !b;
-
+    c = -10;
     if(a > 5)
     {
         a = 10;
     }
+
+    a = |1 - 10 - 20|;
 
     return a;
 }

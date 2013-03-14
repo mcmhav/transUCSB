@@ -451,8 +451,8 @@ public:
     p->visit_children(this);
     fprintf(m_outputfile, "\tpopl\t%%eax\n");
     fprintf(m_outputfile, "\tpopl\t%%ebx\n");
-    fprintf(m_outputfile, "\tsubl\t%%ebx, %%eax\n");
-    fprintf(m_outputfile, "\tpushl\t%%eax\n");
+    fprintf(m_outputfile, "\tsubl\t%%eax, %%ebx\n");
+    fprintf(m_outputfile, "\tpushl\t%%ebx\n");
   }
   void visitPlus(Plus * p)
   {
@@ -473,9 +473,7 @@ public:
   void visitDiv(Div * p)
   {
     p->visit_children(this);
-    fprintf(m_outputfile, "\tmovl\t$1, %%eax\n");
-    fprintf(m_outputfile, "\tmovl\t$1, %%ebx\n");
-    fprintf(m_outputfile, "\timull\t%%ebx\n");
+    fprintf(m_outputfile, "\timull\t%%ebx\n"); //hack from le Internet
     fprintf(m_outputfile, "\tpopl\t%%ebx\n");
     fprintf(m_outputfile, "\tpopl\t%%eax\n");
     fprintf(m_outputfile, "\tidivl\t%%ebx\n");
@@ -506,13 +504,14 @@ public:
   {
     p->visit_children(this);
     int label = new_label();
-    fprintf(m_outputfile, "\tpopl\t%%eax\n");
+    // fprintf(m_outputfile, "\tpopl\t%%eax\n");
     // fprintf(m_outputfile, "\tmovl\t%%eax, %%ecx\n");
     // fprintf(m_outputfile, "\tshr\t$31, %%ecx\n"); //if %eax was negative, then after the shift, %ecx should be 1, otherwise it will be 0.
     // fprintf(m_outputfile, "\tjecxz\tS%d\n", label);
     // fprintf(m_outputfile, "\timull\t$-1, %%eax\n");
-    fprintf(m_outputfile, "\tfabs\t %%eax\n");
-    fprintf(m_outputfile, "\tpushl\t%%eax\n");
+    // fprintf(m_outputfile, "S%d:", label);
+    // fprintf(m_outputfile, "\tpushl\t%%eax\n");
+    fprintf(m_outputfile, "\tabs\n");
   }
 
   // variable and constant access
