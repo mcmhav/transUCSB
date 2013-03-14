@@ -1,18 +1,11 @@
+function int foo()
+{
+    return 2;
+}
+
 function int Main()
 {
-    var int a, c;
-    var bool b;
-    var intarray[10] arr;
-    
-    b = false;
-    b = !b;
-    c = -10;
-    a = 3;
-
-    if(a > 5)
-    {
-        a = 10;
-    }
-
+    var int a;
+    a = foo();
     return a;
 }

@@ -5,6 +5,12 @@
 #include <typeinfo>
 #include <stdio.h>
 
+#define forall(iterator,listptr) \
+  for(iterator = listptr->begin(); iterator != listptr->end(); iterator++) \
+
+#define forallR(iterator,listptr) \
+  for(iterator = listptr->rbegin(); iterator != listptr->rend(); iterator++) \
+
 class Codegen : public Visitor
 {
 	private:
@@ -138,17 +144,16 @@ public:
     fprintf(m_outputfile, "\tmovl\t%%esp, %%ebp\n");
     int num_args = 0;
     list<Param_ptr>::iterator m_parm_iter;
-    for(m_parm_iter = p->m_param_list->begin();
-    m_parm_iter != p->m_param_list->end();
-    ++m_parm_iter)
-    {
+
+    forall(m_parm_iter, p->m_param_list) {
       num_args += ((Decl *)(*m_parm_iter)) -> m_symname_list -> size();
     }
-    for (int i = 1; i <= num_args; i++)
-    {
+
+    for (int i = 1; i <= num_args; i++) {
       int offset = 4 + (i*4);
       fprintf(m_outputfile, "\tpushl\t%d(%%ebp)\n", offset);      
     }
+
     p->m_function_block->accept(this);
     fprintf(m_outputfile, "\tpopl\t%%ebx\n");
     fprintf(m_outputfile, "\tmovl\t%%ebx, %%ebp\n");
@@ -158,29 +163,23 @@ public:
   {
     int num_vars = 0;
     list<Decl_ptr>::iterator m_decl_list_iter;
-    for(m_decl_list_iter = p->m_decl_list->begin();
-      m_decl_list_iter != p->m_decl_list->end();
-      ++m_decl_list_iter)
-    {
+
+    forall(m_decl_list_iter,p->m_decl_list) {
       if (((Decl *)(*m_decl_list_iter))->m_attribute.m_basetype != bt_intarray)
-    num_vars += ((Decl *)(*m_decl_list_iter))->m_symname_list->size();
+        num_vars += ((Decl *)(*m_decl_list_iter))->m_symname_list->size();
       else
-    num_vars += ((Decl *)(*m_decl_list_iter))->m_symname_list->size() * ((TIntArray *)((Decl *)(*m_decl_list_iter))->m_type)->m_primitive->m_data;
+        num_vars += ((Decl *)(*m_decl_list_iter))->m_symname_list->size() * ((TIntArray *)((Decl *)(*m_decl_list_iter))->m_type)->m_primitive->m_data;
     }
+    
     fprintf(m_outputfile, "\tsubl\t$%d, %%esp\n", num_vars*4); 
 
     list<Func_ptr>::iterator m_proc_list_iter;
-    for(m_proc_list_iter = p->m_func_list->begin();
-      m_proc_list_iter != p->m_func_list->end();
-      ++m_proc_list_iter){
+    forall(m_proc_list_iter, p->m_func_list) {
         (*m_proc_list_iter)->accept( this );
     }
 
     list<Stat_ptr>::iterator m_stat_list_iter;
-    for(m_stat_list_iter = p->m_stat_list->begin();
-      m_stat_list_iter != p->m_stat_list->end();
-      ++m_stat_list_iter)
-    {
+    forall(m_stat_list_iter, p->m_stat_list) {
       (*m_stat_list_iter)->accept( this );
     }
     
@@ -215,10 +214,7 @@ public:
   {
     int num_arguments = 0;
     list<Expr_ptr>::reverse_iterator m_expr_list_iter;
-    for(m_expr_list_iter = p->m_expr_list->rbegin();
-      m_expr_list_iter != p->m_expr_list->rend();
-      ++m_expr_list_iter)
-    {
+    forallR(m_expr_list_iter, p->m_expr_list) {
       num_arguments++;
       (*m_expr_list_iter)->accept( this );
     }
@@ -230,10 +226,7 @@ public:
   {
     int num_arguments = 0;
     list<Expr_ptr>::reverse_iterator m_expr_list_iter;
-    for(m_expr_list_iter = p->m_expr_list_2->rbegin();
-      m_expr_list_iter != p->m_expr_list_2->rend();
-      ++m_expr_list_iter)
-    {
+    forallR(m_expr_list_iter, p->m_expr_list_2) {
       num_arguments++;
       (*m_expr_list_iter)->accept( this );
     }
@@ -326,8 +319,8 @@ public:
     int label_done = new_label();
     fprintf(m_outputfile, "\tpopl\t%%eax\n");
     fprintf(m_outputfile, "\tpopl\t%%ecx\n");
-    fprintf(m_outputfile, "\tsubl\t%%eax, %%ecx\n");
-    fprintf(m_outputfile, "\tjecxz\tT%d\n", label_true);
+    fprintf(m_outputfile, "\tcmp\t%%eax, %%ecx\n");
+    fprintf(m_outputfile, "\tje\tT%d\n", label_true);
     fprintf(m_outputfile, "\tmovl\t$0, %%eax\n");
     fprintf(m_outputfile, "\tjmp\tD%d\n", label_done);
     fprintf(m_outputfile, "T%d:", label_true);
@@ -338,15 +331,15 @@ public:
   void visitNoteq(Noteq * p)
   {
     p->visit_children(this);
-    int label_false = new_label();
+    int label_true = new_label();
     int label_done = new_label();
     fprintf(m_outputfile, "\tpopl\t%%eax\n");
     fprintf(m_outputfile, "\tpopl\t%%ecx\n");
-    fprintf(m_outputfile, "\tsubl\t%%eax, %%ecx\n");
-    fprintf(m_outputfile, "\tjecxz\tF%d\n", label_false);
+    fprintf(m_outputfile, "\tcmp\t%%eax, %%ecx\n");
+    fprintf(m_outputfile, "\tjne\tT%d\n", label_true);
     fprintf(m_outputfile, "\tmovl\t$1, %%eax\n");
     fprintf(m_outputfile, "\tjmp\tD%d\n", label_done);
-    fprintf(m_outputfile, "F%d:", label_false);
+    fprintf(m_outputfile, "T%d:", label_true);
     fprintf(m_outputfile, "\tmovl\t$0, %%eax\n");
     fprintf(m_outputfile, "D%d:", label_done);
     fprintf(m_outputfile, "\tpushl\t%%eax\n");
@@ -355,15 +348,11 @@ public:
   {
     p->visit_children(this);
     int label_true = new_label();
-    int label_false = new_label();
     int label_done = new_label();
     fprintf(m_outputfile, "\tpopl\t%%eax\n");
     fprintf(m_outputfile, "\tpopl\t%%ecx\n");
-    fprintf(m_outputfile, "\tsubl\t%%eax, %%ecx\n");
-    fprintf(m_outputfile, "\tjecxz\tF%d\n", label_false);
-    fprintf(m_outputfile, "\tshr\t$31, %%ecx\n");
-    fprintf(m_outputfile, "\tjecxz\tT%d\n", label_true);
-    fprintf(m_outputfile, "F%d:", label_false);
+    fprintf(m_outputfile, "\tcmp\t%%eax, %%ecx\n");
+    fprintf(m_outputfile, "\tjg\tT%d\n", label_true);
     fprintf(m_outputfile, "\tmovl\t$0, %%eax\n");
     fprintf(m_outputfile, "\tjmp\tD%d\n", label_done);
     fprintf(m_outputfile, "T%d:", label_true);
@@ -378,10 +367,8 @@ public:
     int label_done = new_label();
     fprintf(m_outputfile, "\tpopl\t%%eax\n");
     fprintf(m_outputfile, "\tpopl\t%%ecx\n");
-    fprintf(m_outputfile, "\tsubl\t%%eax, %%ecx\n");
-    fprintf(m_outputfile, "\tjecxz\tT%d\n", label_true);
-    fprintf(m_outputfile, "\tshr\t$31, %%ecx\n");
-    fprintf(m_outputfile, "\tjecxz\tT%d\n", label_true);
+    fprintf(m_outputfile, "\tcmp\t%%eax, %%ecx\n");
+    fprintf(m_outputfile, "\tjge\tT%d\n", label_true);
     fprintf(m_outputfile, "\tmovl\t$0, %%eax\n");
     fprintf(m_outputfile, "\tjmp\tD%d\n", label_done);
     fprintf(m_outputfile, "T%d:", label_true);
@@ -393,15 +380,11 @@ public:
   {
     p->visit_children(this);
     int label_true = new_label();
-    int label_false = new_label();
     int label_done = new_label();
-    fprintf(m_outputfile, "\tpopl\t%%ecx\n");
     fprintf(m_outputfile, "\tpopl\t%%eax\n");
-    fprintf(m_outputfile, "\tsubl\t%%eax, %%ecx\n");
-    fprintf(m_outputfile, "\tjecxz\tF%d\n", label_false);
-    fprintf(m_outputfile, "\tshr\t$31, %%ecx\n");
-    fprintf(m_outputfile, "\tjecxz\tT%d\n", label_true);
-    fprintf(m_outputfile, "F%d:", label_false);
+    fprintf(m_outputfile, "\tpopl\t%%ecx\n");
+    fprintf(m_outputfile, "\tcmp\t%%eax, %%ecx\n");
+    fprintf(m_outputfile, "\tjl\tT%d\n", label_true);
     fprintf(m_outputfile, "\tmovl\t$0, %%eax\n");
     fprintf(m_outputfile, "\tjmp\tD%d\n", label_done);
     fprintf(m_outputfile, "T%d:", label_true);
@@ -414,12 +397,10 @@ public:
     p->visit_children(this);
     int label_true = new_label();
     int label_done = new_label();
-    fprintf(m_outputfile, "\tpopl\t%%ecx\n");
     fprintf(m_outputfile, "\tpopl\t%%eax\n");
-    fprintf(m_outputfile, "\tsubl\t%%eax, %%ecx\n");
-    fprintf(m_outputfile, "\tjecxz\tT%d\n", label_true);
-    fprintf(m_outputfile, "\tshr\t$31, %%ecx\n");
-    fprintf(m_outputfile, "\tjecxz\tT%d\n", label_true);
+    fprintf(m_outputfile, "\tpopl\t%%ecx\n");
+    fprintf(m_outputfile, "\tcmp\t%%eax, %%ecx\n");
+    fprintf(m_outputfile, "\tjle\tT%d\n", label_true);
     fprintf(m_outputfile, "\tmovl\t$0, %%eax\n");
     fprintf(m_outputfile, "\tjmp\tD%d\n", label_done);
     fprintf(m_outputfile, "T%d:", label_true);
@@ -482,15 +463,8 @@ public:
   void visitNot(Not * p)
   {
     p->visit_children(this);
-    int label_set_to_one = new_label();
-    int label_done = new_label();
-    fprintf(m_outputfile, "\tpopl\t%%ecx\n");
-    fprintf(m_outputfile, "\tjecxz\tO%d\n", label_set_to_one);
-    fprintf(m_outputfile, "\tmovl\t$0, %%eax\n");
-    fprintf(m_outputfile, "\tjmp\tD%d\n", label_done);
-    fprintf(m_outputfile, "O%d:", label_set_to_one);
-    fprintf(m_outputfile, "\tmovl\t$1, %%eax\n");
-    fprintf(m_outputfile, "D%d:", label_done);
+    fprintf(m_outputfile, "\tpopl\t%%eax\n");
+    fprintf(m_outputfile, "\txor\t$1, %%eax\n");
     fprintf(m_outputfile, "\tpushl\t%%eax\n");
   }
   void visitUminus(Uminus * p)
@@ -502,7 +476,7 @@ public:
   }
   void visitMagnitude(Magnitude * p)
   {
-    p->visit_children(this);
+    p->visit_children(this);    // fabs not working?
     int label = new_label();    // abs(x) = (x XOR y) - y where y = x >>> 31
     fprintf(m_outputfile, "\tpopl\t%%eax\n");
     fprintf(m_outputfile, "\tmovl\t%%eax, %%ebx\n");
