@@ -111,7 +111,7 @@ class Codegen : public Visitor
   
   void emit_prologue(SymName *name, unsigned int size_locals, unsigned int num_args)
   {
-    //fprintf(m_outputfile, ".globl\t%s\n\n", name->spelling());
+    fprintf(m_outputfile, ".globl\t%s\n\n", name->spelling());
     fprintf(m_outputfile, "%s:\n", name->spelling());
     fprintf(m_outputfile, "\tpushl\t%%ebp\n");
     fprintf(m_outputfile, "\tmovl\t%%esp, %%ebp\n");
@@ -146,7 +146,7 @@ public:
   void visitProgram(Program * p)
   {
     set_text_mode();
-    fprintf(m_outputfile, ".globl\tMain\n\n");
+    //fprintf(m_outputfile, ".globl\tMain\n\n");
     p->visit_children(this);
   }
   void visitFunc(Func * p)
