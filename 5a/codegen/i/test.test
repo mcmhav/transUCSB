@@ -5,7 +5,9 @@ function int poo(int a, int b)
 
 function int foo(int a, int b)
 {
-    return poo(a, b);
+    var int d;
+    d = poo(a, b);
+    return d;
 }
 
 function int Main()
