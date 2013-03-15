@@ -1,13 +1,13 @@
+function int poo(int a, int b)
+{
+    return a - b;
+}
+
 function int foo(int a, int b)
 {
     var int d;
     d = poo(a, b);
     return d;
-}
-
-function int poo(int a, int b)
-{
-    return a - b;
 }
 
 function int Main()
