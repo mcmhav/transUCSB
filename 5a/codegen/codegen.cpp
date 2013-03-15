@@ -111,10 +111,21 @@ class Codegen : public Visitor
   
   void emit_prologue(SymName *name, unsigned int size_locals, unsigned int num_args)
   {
+    fprintf(m_outputfile, "%s:\n", name);
+    fprintf(m_outputfile, "\tpushl\t%%ebp\n");
+    fprintf(m_outputfile, "\tmovl\t%%esp, %%ebp\n");
+    
+    for (int i = 1; i <= num_args; i++) {
+      int offset = wordsize + (i*wordsize);
+      fprintf(m_outputfile, "\tpushl\t%d(%%ebp)\n", offset);      
+    }
   }
 
   void emit_epilogue()
   {
+    fprintf(m_outputfile, "\tpopl\t%%ebx\n");
+    fprintf(m_outputfile, "\tmovl\t%%ebx, %%ebp\n");
+    fprintf(m_outputfile, "\tret\n");
   }
   
   // HERE: more functions to emit code
@@ -139,25 +150,9 @@ public:
   }
   void visitFunc(Func * p)
   {
-    fprintf(m_outputfile, "%s:\n", p->m_symname->spelling());
-    fprintf(m_outputfile, "\tpushl\t%%ebp\n");
-    fprintf(m_outputfile, "\tmovl\t%%esp, %%ebp\n");
-    int num_args = 0;
-
-    list<Param_ptr>::iterator m_parm_iter;
-    forall(m_parm_iter, p->m_param_list) {
-      num_args ++;
-    }
-
-    for (int i = 1; i <= num_args; i++) {
-      int offset = wordsize + (i*wordsize);
-      fprintf(m_outputfile, "\tpushl\t%d(%%ebp)\n", offset);      
-    }
-
+    emit_prologue(p->m_symname->spelling(), 0, p->m_param_list.size());
     p->m_function_block->accept(this);
-    fprintf(m_outputfile, "\tpopl\t%%ebx\n");
-    fprintf(m_outputfile, "\tmovl\t%%ebx, %%ebp\n");
-    fprintf(m_outputfile, "\tret\n");
+    emit_epilogue();
   }
   void visitFunction_block(Function_block * p)
   {
