@@ -150,7 +150,7 @@ public:
   }
   void visitFunc(Func * p)
   {
-    emit_prologue(p->m_symname->spelling(), 0, p->m_param_list.size());
+    emit_prologue(p->m_symname->spelling(), 0, *p->m_param_list.size());
     p->m_function_block->accept(this);
     emit_epilogue();
   }
