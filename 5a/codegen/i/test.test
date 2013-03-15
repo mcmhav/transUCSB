@@ -1,6 +1,7 @@
 function int foo(int a, int b)
 {
-    return poo(a, b);
+    a = poo(a, b);
+    return a;
 }
 
 function int poo(int a, int b)
