@@ -111,7 +111,7 @@ class Codegen : public Visitor
   
   void emit_prologue(SymName *name, unsigned int size_locals, unsigned int num_args)
   {
-    fprintf(m_outputfile, ".globl\t" + name->spelling() + "\n\n");
+    fprintf(m_outputfile, ".globl\t%s\n\n", name->spelling());
     fprintf(m_outputfile, "%s:\n", name->spelling());
     fprintf(m_outputfile, "\tpushl\t%%ebp\n");
     fprintf(m_outputfile, "\tmovl\t%%esp, %%ebp\n");
