@@ -212,11 +212,8 @@ public:
   }
   void visitCall(Call * p)
   {
-    int num_arguments = 0;
-
     list<Expr_ptr>::reverse_iterator m_expr_list_iter;
     forallR(m_expr_list_iter, p->m_expr_list) {
-      num_arguments++;
       (*m_expr_list_iter)->accept(this);
     }
 
@@ -226,11 +223,8 @@ public:
   }
   void visitArrayCall(ArrayCall *p)
   {
-    int num_arguments = 0;
-
     list<Expr_ptr>::reverse_iterator m_expr_list_iter;
     forallR(m_expr_list_iter, p->m_expr_list_2) {
-      num_arguments++;
       (*m_expr_list_iter)->accept(this);
     }
 
