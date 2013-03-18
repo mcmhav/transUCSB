@@ -1,0 +1,18 @@
+Assignment 5:
+
+codegenerator produces runnable assembly. 
+
+Optimization:
+Optimized for if statement, so if there is just one outcome, just that is put into assembly. Same goes for while loops.
+
+Since we do not have nested function I'm quite sure it's safe to for functions with always the same answer to return that, so if the returnstatement is not TOP code will only be generated for returning that.
+
+In the assignment part, I check if there already exist a value for the expression, if there is, the value is assigned to the variable, else, the normal expansion of expression is run.
+
+Since functions might alter variable values i do not send their value on to use in optimization even though they might have one. 
+
+Did nothing with kill / gen - set.
+
+
+Name: Martin Havig
+Email: martihav@stud.ntnu.no

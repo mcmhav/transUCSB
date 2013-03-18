@@ -1,13 +1,15 @@
 function int poo(int a, int b)
 {
-    return a - b;
+    var int d;
+    d = 5;
+    return d;
 }
 
 function int foo(int a, int b)
 {
     var int d;
-    d = poo(a, b);
-    return d;
+    a = poo(a, b);
+    return a;
 }
 
 function int Main()
@@ -15,6 +17,16 @@ function int Main()
     var int a, b, c;
     b = 2;
     c = 4;
-    a = foo(1, 5);
+    a = poo(1, 5);
+    
+    c = 6 + 20 + a;
+    a = 4;
+
+    if(c == 5) {
+        a = 7;
+    } else {
+        a = 6;
+    }
+
     return a;
 }

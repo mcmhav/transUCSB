@@ -256,35 +256,47 @@ public:
     
 
     // So first, visit the expression.
-    in = visit(p->m_expr, in);
+    // in = visit(p->m_expr, in);
 
-    // And then, as many times as needed,
-    while(true) {
-      // Copy this lattice elem map into another
-      LatticeElemMap* clone = new LatticeElemMap(*in);
+    // // And then, as many times as needed,
+    // while(true) {
+    //   // Copy this lattice elem map into another
+    //   LatticeElemMap* clone = new LatticeElemMap(*in);
   
-      // Visit the block using this clone
-      clone = visit(p->m_nested_block, clone);
+    //   // Visit the block using this clone
+    //   clone = visit(p->m_nested_block, clone);
       
-    // now visit the expression
-    clone = visit(p->m_expr, clone);
+    // // now visit the expression
+    // clone = visit(p->m_expr, clone);
 
-    // Join the original "in" lattice_elem_map with the clone,
-    // storing the result in the clone
-    join_lattice_elem_maps(clone, in);
+    // // Join the original "in" lattice_elem_map with the clone,
+    // // storing the result in the clone
+    // join_lattice_elem_maps(clone, in);
 
-      // Compare them
+    //   // Compare them
+    //   bool equal = lattice_maps_equal(in, clone);
+
+    // // Make "in" point to the clone, deleting in
+    // delete in;
+    // in = clone;
+
+    // // If the clone was the same as "in", meaning that we've reached a fix-point,
+    // // we're done!
+    // if (equal)
+    //   return in;
+    // }
+
+    in = visit(p->m_expr, in);
+    while(true) {
+      LatticeElemMap* clone = new LatticeElemMap(*in);
+      clone = visit(p->m_nested_block, clone);
+      join_lattice_elem_maps(in, clone);
+      clone = visit(p->m_expr, clone);
       bool equal = lattice_maps_equal(in, clone);
-
-    // Make "in" point to the clone, deleting in
-    delete in;
-    in = clone;
-
-    // If the clone was the same as "in", meaning that we've reached a fix-point,
-    // we're done!
-    if (equal)
-      return in;
-    }
+      delete clone;
+      if (equal)
+      break;
+    } return in;
   }
 
   LatticeElemMap* visitTInt(TInt *p, LatticeElemMap *in)

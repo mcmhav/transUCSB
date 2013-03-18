@@ -111,15 +111,12 @@ class Codegen : public Visitor
   
   void emit_prologue(SymName *name, unsigned int size_locals, unsigned int num_args)
   {
-    fprintf(m_outputfile, ".globl\t%s\n\n", name->spelling());
+    fprintf(m_outputfile, "\n.globl\t%s\n\n", name->spelling());
     fprintf(m_outputfile, "%s:\n", name->spelling());
     fprintf(m_outputfile, "\tpushl\t%%ebp\n");
     fprintf(m_outputfile, "\tmovl\t%%esp, %%ebp\n");
     
-    for (int i = 1; i <= num_args; i++) {
-      int offset = wordsize + (i*wordsize);
-      fprintf(m_outputfile, "\tpushl\t%d(%%ebp)\n", offset);      
-    }
+
   }
 
   void emit_epilogue()
@@ -146,13 +143,31 @@ public:
   void visitProgram(Program * p)
   {
     set_text_mode();
-    //fprintf(m_outputfile, ".globl\tMain\n\n");
     p->visit_children(this);
   }
   void visitFunc(Func * p)
   {
     emit_prologue(p->m_symname, 0, (int)p->m_param_list->size());
-    p->m_function_block->accept(this);
+
+    // if(p->m_function_block->m_return->m_expr->m_attribute.m_lattice_elem == BOTTOM) {
+    //   fprintf(m_outputfile, "\t## TOP!! ##\n");
+    // }
+    if(p->m_function_block->m_return->m_expr->m_attribute.m_lattice_elem != TOP &&
+      p->m_function_block->m_return->m_expr->m_attribute.m_lattice_elem != BOTTOM)
+    {
+      // fprintf(m_outputfile, "\t## %d ##\n", p->m_function_block->m_return->m_expr->m_attribute.m_lattice_elem.value);
+
+      fprintf(m_outputfile, "\tpushl\t$%d\n", 
+        p->m_function_block->m_return->m_expr->m_attribute.m_lattice_elem.value);
+      fprintf(m_outputfile, "\tpopl\t%%eax\n");
+    } else {
+      for (int i = 1; i <= (int)p->m_param_list->size(); i++) {
+        int offset = wordsize + (i*wordsize);
+        fprintf(m_outputfile, "\tpushl\t%d(%%ebp)\n", offset);      
+      }
+      p->m_function_block->accept(this);
+    }
+
     emit_epilogue();
   }
   void visitFunction_block(Function_block * p)
@@ -188,7 +203,13 @@ public:
   }
   void visitAssignment(Assignment * p)
   {
-    p->visit_children(this);
+    if(p->m_expr->m_attribute.m_lattice_elem != TOP &&
+      p->m_expr->m_attribute.m_lattice_elem != BOTTOM) {
+      // fprintf(m_outputfile, "\t## %d ##\n", p->m_expr->m_attribute.m_lattice_elem.value);
+      fprintf(m_outputfile, "\tpushl\t$%d\n", p->m_expr->m_attribute.m_lattice_elem.value);
+    } else {
+      p->visit_children(this);
+    }
     fprintf(m_outputfile, "\tpopl\t%%eax\n");
     Symbol *s = m_st->lookup(p->m_attribute.m_scope, p->m_symname->spelling());
     fprintf(m_outputfile, "\tmovl\t%%eax, %d(%%ebp)\n", -(wordsize+s->get_offset()) ); 
@@ -244,43 +265,61 @@ public:
   // control flow
   void visitIfNoElse(IfNoElse * p)
   {
-    p->m_expr->accept(this);
-    int label = new_label();
-    fprintf(m_outputfile, "\tpopl\t%%ecx\n");
-    fprintf(m_outputfile, "\tmovl $0, %%ebx\n");
-    fprintf(m_outputfile, "\tcmp %%eax, %%ebx\n");
-    fprintf(m_outputfile, "\tje D%d\n", label);
-    p->m_nested_block->accept(this);
-    fprintf(m_outputfile, "D%d:", label);
+    if(p->m_expr->m_attribute.m_lattice_elem.value == 0) {
+      //skip if
+      // fprintf(m_outputfile, "\t## %d ##\n", p->m_expr->m_attribute.m_lattice_elem.value);
+    } else {
+      p->m_expr->accept(this);
+      int label = new_label();
+      fprintf(m_outputfile, "\tpopl\t%%ecx\n");
+      fprintf(m_outputfile, "\tmovl $0, %%ebx\n");
+      fprintf(m_outputfile, "\tcmp %%eax, %%ebx\n");
+      fprintf(m_outputfile, "\tje D%d\n", label);
+      p->m_nested_block->accept(this);
+      fprintf(m_outputfile, "D%d:", label);
+    }
   }
   void visitIfWithElse(IfWithElse * p)
   {
-    p->m_expr->accept(this);
-    int label_else = new_label();
-    int label_done = new_label();
-    fprintf(m_outputfile, "\tpopl\t%%ecx\n");
-    fprintf(m_outputfile, "\tmovl $0, %%ebx\n");
-    fprintf(m_outputfile, "\tcmp %%eax, %%ebx\n");
-    fprintf(m_outputfile, "\tje E%d\n", label_else);
-    p->m_nested_block_1->accept(this);
-    fprintf(m_outputfile, "\tjmp\tD%d\n", label_done);
-    fprintf(m_outputfile, "E%d:", label_else);
-    p->m_nested_block_2->accept(this);
-    fprintf(m_outputfile, "D%d:", label_done);
+    if(p->m_expr->m_attribute.m_lattice_elem.value == 1) {
+      //do if
+      p->m_nested_block_1->accept(this);
+    } else if (p->m_expr->m_attribute.m_lattice_elem.value == 0){
+      //do else
+      p->m_nested_block_2->accept(this);
+    } else {
+      p->m_expr->accept(this);
+      int label_else = new_label();
+      int label_done = new_label();
+      fprintf(m_outputfile, "\tpopl\t%%ecx\n");
+      fprintf(m_outputfile, "\tmovl $0, %%ebx\n");
+      fprintf(m_outputfile, "\tcmp %%eax, %%ebx\n");
+      fprintf(m_outputfile, "\tje E%d\n", label_else);
+      p->m_nested_block_1->accept(this);
+      fprintf(m_outputfile, "\tjmp\tD%d\n", label_done);
+      fprintf(m_outputfile, "E%d:", label_else);
+      p->m_nested_block_2->accept(this);
+      fprintf(m_outputfile, "D%d:", label_done);
+    }
   }
   void visitWhileLoop(WhileLoop * p)
   {
-    int label_loop = new_label();
-    int label_done = new_label();
-    fprintf(m_outputfile, "L%d:", label_loop);
-    p->m_expr->accept(this);
-    fprintf(m_outputfile, "\tpopl\t%%ecx\n");
-    fprintf(m_outputfile, "\tmovl $0, %%ebx\n");
-    fprintf(m_outputfile, "\tcmp %%eax, %%ebx\n");
-    fprintf(m_outputfile, "\tje D%d\n", label_done);
-    p->m_nested_block->accept(this);
-    fprintf(m_outputfile, "\tjmp\tL%d\n", label_loop);    
-    fprintf(m_outputfile, "D%d:", label_done);
+    if(p->m_expr->m_attribute.m_lattice_elem.value == 0) {
+      //skip while
+      // p->m_nested_block_1->accept(this);
+    } else {
+      int label_loop = new_label();
+      int label_done = new_label();
+      fprintf(m_outputfile, "L%d:", label_loop);
+      p->m_expr->accept(this);
+      fprintf(m_outputfile, "\tpopl\t%%ecx\n");
+      fprintf(m_outputfile, "\tmovl $0, %%ebx\n");
+      fprintf(m_outputfile, "\tcmp %%eax, %%ebx\n");
+      fprintf(m_outputfile, "\tje D%d\n", label_done);
+      p->m_nested_block->accept(this);
+      fprintf(m_outputfile, "\tjmp\tL%d\n", label_loop);    
+      fprintf(m_outputfile, "D%d:", label_done);
+    }
   }
 
   // variable declarations (no code generation needed)
@@ -431,6 +470,12 @@ public:
   }
   void visitPlus(Plus * p)
   {
+    // if(p->m_expr->m_attribute.m_lattice_elem != TOP &&
+    //   p->m_expr->m_attribute.m_lattice_elem != BOTTOM)
+    // {
+    //   fprintf(m_outputfile, "\t## %d ##\n", p->m_expr->m_attribute.m_lattice_elem.value);
+
+    // }
     p->visit_children(this);
     fprintf(m_outputfile, "\tpopl\t%%eax\n");
     fprintf(m_outputfile, "\tpopl\t%%ebx\n");
